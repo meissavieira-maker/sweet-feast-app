@@ -1,12 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2, Settings } from "lucide-react";
 import { StoreHeader } from "@/components/storefront/StoreHeader";
 import { CategoryTabs } from "@/components/storefront/CategoryTabs";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { CartFab } from "@/components/storefront/CartFab";
 import { CartModal } from "@/components/storefront/CartModal";
 import { CartProvider } from "@/lib/cart-context";
-import { categories, products } from "@/lib/products";
+import { categories, type Product } from "@/lib/products";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,7 +39,20 @@ function Store() {
   const [activeCat, setActiveCat] = useState(categories[0].id);
   const [cartOpen, setCartOpen] = useState(false);
 
-  const visible = useMemo(() => products.filter((p) => p.category === activeCat), [activeCat]);
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["storefront-products"],
+    queryFn: async (): Promise<Product[]> => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id,name,description,price,category,image_url,stock,badge")
+        .eq("active", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Product[];
+    },
+  });
+
+  const visible = useMemo(() => products.filter((p) => p.category === activeCat), [products, activeCat]);
   const activeLabel = categories.find((c) => c.id === activeCat)?.label;
 
   return (
@@ -57,13 +73,38 @@ function Store() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex justify-center py-20 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : visible.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-12 text-center">
+              <p className="font-display text-lg text-card-foreground">Nenhum produto nesta categoria ainda.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Cadastre produtos no{" "}
+                <Link to="/admin" className="text-primary underline-offset-4 hover:underline">
+                  Painel do Admin
+                </Link>{" "}
+                para vê-los aqui.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {visible.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          )}
         </section>
       </main>
+
+      <Link
+        to="/admin"
+        className="fixed bottom-5 left-5 z-40 inline-flex items-center gap-1.5 rounded-full bg-card/80 px-3 py-2 text-xs text-muted-foreground shadow-soft backdrop-blur hover:text-primary"
+      >
+        <Settings className="h-3.5 w-3.5" />
+        Admin
+      </Link>
 
       <CartFab onOpen={() => setCartOpen(true)} />
       <CartModal open={cartOpen} onOpenChange={setCartOpen} />
