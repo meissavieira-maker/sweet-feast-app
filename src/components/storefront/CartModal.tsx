@@ -1,4 +1,4 @@
-import { Minus, Plus, Trash2, X, Bike, Store, ArrowRight } from "lucide-react";
+import { Minus, Plus, Trash2, Bike, Store, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { formatBRL, useCart } from "@/lib/cart-context";
 import {
@@ -16,24 +16,12 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="max-w-lg gap-0 overflow-hidden rounded-3xl border-border bg-card p-0"
-      >
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div>
-            <DialogTitle className="font-display text-xl text-card-foreground">Seu Carrinho</DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              {count} {count === 1 ? "item adicionado" : "itens adicionados"}
-            </DialogDescription>
-          </div>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Fechar"
-          >
-            <X className="h-4 w-4" />
-          </button>
+      <DialogContent className="max-w-lg gap-0 overflow-hidden rounded-3xl border-border bg-card p-0">
+        <div className="border-b border-border px-6 py-4">
+          <DialogTitle className="font-display text-xl text-card-foreground">Seu Carrinho</DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            {count} {count === 1 ? "item adicionado" : "itens adicionados"}
+          </DialogDescription>
         </div>
 
         <div className="max-h-[42vh] overflow-y-auto px-6 py-5">
