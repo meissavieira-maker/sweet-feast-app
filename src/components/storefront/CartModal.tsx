@@ -36,10 +36,9 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       _customer_name: name.trim(),
       _customer_phone: phone.trim(),
       _mode: mode,
-      _address: mode === "entrega" ? address.trim() : null,
+      _address: mode === "entrega" ? address.trim() : "",
       _delivery_fee: deliveryFee,
       _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
-      _notes: null,
     });
     setSubmitting(false);
 
