@@ -330,49 +330,51 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         {showPix && (
           <div className="px-6 py-6 text-center">
             <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              <QrCode className="h-3.5 w-3.5" /> Mercado Pago · PIX
+              <QrCode className="h-3.5 w-3.5" /> PIX · Chave Manual
             </div>
-            {pix!.qr_code_base64 ? (
-              <img
-                src={`data:image/png;base64,${pix!.qr_code_base64}`}
-                alt="QR Code PIX"
-                className="mx-auto mt-4 h-56 w-56 rounded-2xl border border-border bg-white p-2"
-              />
-            ) : (
-              <div className="mx-auto mt-4 flex h-56 w-56 items-center justify-center rounded-2xl border border-dashed border-border text-xs text-muted-foreground">
-                QR Code indisponível
-              </div>
-            )}
-            <p className="mt-4 font-display text-xl text-primary">{formatBRL(pending?.total ?? 0)}</p>
-            {pix!.qr_code && (
-              <div className="mx-auto mt-4 max-w-sm rounded-2xl border border-border bg-secondary/40 p-3 text-left">
+            <p className="mt-4 font-display text-2xl text-primary">{formatBRL(pending?.total ?? 0)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Total a transferir via PIX</p>
+
+            <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-border bg-secondary/40 p-5 text-left">
+              <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  PIX copia e cola
+                  Tipo de chave
                 </p>
-                <p className="mt-1 break-all font-mono text-[11px] text-card-foreground">
-                  {pix!.qr_code.slice(0, 90)}{pix!.qr_code.length > 90 ? "…" : ""}
-                </p>
-                <button
-                  onClick={copyPix}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground"
-                >
-                  <Copy className="h-3 w-3" /> Copiar código
-                </button>
+                <p className="mt-0.5 text-sm font-medium text-card-foreground">E-mail</p>
               </div>
-            )}
+              <div className="mt-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Chave PIX
+                </p>
+                <p className="mt-0.5 break-all font-mono text-sm text-card-foreground">{PIX_KEY}</p>
+              </div>
+              <div className="mt-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Beneficiário
+                </p>
+                <p className="mt-0.5 text-sm text-card-foreground">{PIX_BENEFICIARY}</p>
+              </div>
+              <button
+                onClick={copyPix}
+                className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-2.5 text-xs font-semibold text-primary-foreground hover:brightness-110"
+              >
+                <Copy className="h-3.5 w-3.5" /> Copiar Chave PIX
+              </button>
+            </div>
+
             <button
               onClick={handleConfirmPaid}
-              disabled={confirming}
-              className="mt-5 inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-cherry px-6 py-4 text-base font-semibold text-cherry-foreground shadow-glow hover:brightness-110 disabled:opacity-60"
+              className="mt-5 inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-cherry px-6 py-4 text-base font-semibold text-cherry-foreground shadow-glow hover:brightness-110"
             >
-              {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              Já paguei — verificar
+              <CheckCircle2 className="h-4 w-4" />
+              Já paguei — Avançar para o WhatsApp
             </button>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              Detectamos o pagamento automaticamente assim que cair.
+              Após o pagamento, envie a comanda pelo WhatsApp para confirmarmos seu pedido.
             </p>
           </div>
         )}
+
 
         {showCard && (
           <div className="px-6 py-5">
