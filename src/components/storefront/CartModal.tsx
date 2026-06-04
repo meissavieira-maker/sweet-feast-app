@@ -1,7 +1,8 @@
-import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin } from "lucide-react";
-import { useState } from "react";
+import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin, Copy, QrCode } from "lucide-react";
+import { useEffect, useState } from "react";
 import { formatBRL, useCart, type CartItem } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
+import { createPixPayment, checkPixPayment } from "@/lib/payments.functions";
 import {
   Dialog,
   DialogContent,
