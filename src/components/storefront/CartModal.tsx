@@ -30,6 +30,13 @@ type SuccessInfo = {
   total: number;
 };
 
+type PixInfo = {
+  payment_id: string;
+  qr_code: string;
+  qr_code_base64: string;
+  ticket_url: string;
+};
+
 export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { items, setQty, remove, total, count, clear } = useCart();
   const [mode, setMode] = useState<"entrega" | "retirada">("entrega");
@@ -38,11 +45,32 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [cityId, setCityId] = useState<string>("");
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [pix, setPix] = useState<PixInfo | null>(null);
+  const [pending, setPending] = useState<SuccessInfo | null>(null);
   const [success, setSuccess] = useState<SuccessInfo | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const selectedCity = DELIVERY_CITIES.find((c) => c.id === cityId);
   const deliveryFee = mode === "entrega" ? (selectedCity?.fee ?? 0) : 0;
   const finalTotal = total + deliveryFee;
+
+  // Auto-poll Mercado Pago to detect payment approval
+  useEffect(() => {
+    if (!pix || !pending || success) return;
+    let stop = false;
+    const id = setInterval(async () => {
+      try {
+        const r = await checkPixPayment({ data: { payment_id: pix.payment_id, order_id: pending.orderId } });
+        if (!stop && r.status === "approved") {
+          setSuccess(pending);
+          setPix(null);
+        }
+      } catch {
+        /* keep polling silently */
+      }
+    }, 5000);
+    return () => { stop = true; clearInterval(id); };
+  }, [pix, pending, success]);
 
   async function handleCheckout() {
     if (!name.trim()) {
@@ -74,27 +102,75 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       _delivery_fee: deliveryFee,
       _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
     });
-    setSubmitting(false);
 
     if (error) {
+      setSubmitting(false);
       toast.error(error.message || "Não foi possível concluir o pedido");
       return;
     }
     const orderId = typeof data === "string" ? data : "";
-    setSuccess({
+    const pendingInfo: SuccessInfo = {
       orderId,
       name: name.trim(),
       mode,
       address: fullAddress,
       items: snapshotItems,
       total: snapshotTotal,
-    });
-    clear();
+    };
+
+    try {
+      const pixRes = await createPixPayment({
+        data: {
+          order_id: orderId,
+          amount: snapshotTotal,
+          payer_name: name.trim(),
+          description: `Pedido #${orderId.slice(0, 8).toUpperCase()} — Meissa Vieira`,
+        },
+      });
+      setPending(pendingInfo);
+      setPix({
+        payment_id: pixRes.payment_id,
+        qr_code: pixRes.qr_code,
+        qr_code_base64: pixRes.qr_code_base64,
+        ticket_url: pixRes.ticket_url,
+      });
+      clear();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Falha ao gerar pagamento PIX";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleConfirmPaid() {
+    if (!pix || !pending) return;
+    setConfirming(true);
+    try {
+      const r = await checkPixPayment({ data: { payment_id: pix.payment_id, order_id: pending.orderId } });
+      if (r.status === "approved") {
+        setSuccess(pending);
+        setPix(null);
+      } else {
+        toast.message("Pagamento ainda não identificado. Tente novamente em alguns segundos.");
+      }
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível verificar o pagamento");
+    } finally {
+      setConfirming(false);
+    }
+  }
+
+  function copyPix() {
+    if (!pix?.qr_code) return;
+    navigator.clipboard.writeText(pix.qr_code).then(() => toast.success("Código PIX copiado"));
   }
 
   function handleClose(v: boolean) {
     if (!v) {
       setSuccess(null);
+      setPix(null);
+      setPending(null);
       setName("");
       setPhone("");
       setAddress("");
@@ -102,6 +178,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     }
     onOpenChange(v);
   }
+
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
