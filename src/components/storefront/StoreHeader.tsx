@@ -1,4 +1,4 @@
-import heroImg from "@/assets/hero-doceria.jpg";
+import heroAsset from "@/assets/festival-fatias.png.asset.json";
 import { useStoreStatus } from "@/hooks/use-store-status";
 
 export function StoreHeader() {
@@ -6,8 +6,14 @@ export function StoreHeader() {
   return (
     <header className="relative overflow-hidden">
       <div className="absolute inset-0">
-        <img src={heroImg} alt="" className="h-full w-full object-cover" width={1600} height={900} />
-        <div className="absolute inset-0 bg-gradient-hero" />
+        <img
+          src={heroAsset.url}
+          alt="1º Festival de Fatias no Delivery — Meissa Vieira Confeitaria"
+          className="h-full w-full object-cover"
+          width={1600}
+          height={900}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-background" />
       </div>
 
       <div className="relative mx-auto max-w-6xl px-5 pt-8 pb-12 sm:pt-12 sm:pb-20">
@@ -28,24 +34,12 @@ export function StoreHeader() {
 
         <div className="mt-14 sm:mt-24 max-w-2xl text-primary-foreground">
           <p className="text-[11px] tracking-[0.35em] uppercase text-gold mb-3">Confeitaria Artesanal</p>
-          <h1 className="font-display text-5xl sm:text-7xl leading-[1.02] font-medium">
+          <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl leading-[1.02] font-medium">
             Meissa <em className="text-gold not-italic font-normal italic">Vieira</em> Confeitaria
           </h1>
-          <p className="mt-5 max-w-md text-sm sm:text-base text-white/80 leading-relaxed">
-            Tortas, bolos e docinhos feitos à mão todas as manhãs. Entrega na sua porta em até 60 minutos.
+          <p className="mt-5 max-w-md font-display text-lg sm:text-2xl text-gold italic">
+            1º Festival de Fatias no Delivery.
           </p>
-
-          <div className="mt-7 flex flex-wrap items-center gap-3 text-xs sm:text-sm text-white/85">
-            <span className="rounded-full bg-white/10 backdrop-blur px-3 py-1.5 border border-white/15">
-              Seg–Sáb · 09h às 21h
-            </span>
-            <span className="rounded-full bg-white/10 backdrop-blur px-3 py-1.5 border border-white/15">
-              Entrega 30–60 min
-            </span>
-            <span className="rounded-full bg-cherry/90 px-3 py-1.5 text-cherry-foreground font-medium">
-              Frete grátis acima de R$ 80
-            </span>
-          </div>
         </div>
       </div>
     </header>
