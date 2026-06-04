@@ -689,7 +689,7 @@ function buildWhatsAppMessage(s: SuccessInfo) {
     `-----------------------------------------`,
     `🆔 *Pedido:* #${shortId}`,
     `👤 *Cliente:* ${s.name}`,
-    `📞 *WhatsApp:* ${"—"}`,
+    `📞 *WhatsApp:* ${s.phone || "—"}`,
     `🛵 *Forma de Envio:* ${modoLabel}`,
     `📍 *Endereço:* ${endereco}`,
     ``,
