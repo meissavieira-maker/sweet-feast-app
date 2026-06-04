@@ -21,6 +21,8 @@ const DELIVERY_CITIES = [
 
 const PICKUP_ADDRESS = "Rua Rodrigo Brandão, Número 32, Cachoeira - BA";
 const WHATSAPP_PHONE = "5575991074216";
+const PIX_KEY = "meissavieira@hotmail.com";
+const PIX_BENEFICIARY = "Meissa Vieira dos Santos Mendes";
 const CLOSED_MESSAGE =
   "Pedidos do Festival de Tortas suspensos temporariamente. Lembrando que as entregas e retiradas ocorrerão neste domingo a partir das 14h!";
 
