@@ -138,7 +138,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           initialization: { amount: Number(pending.total.toFixed(2)) },
           customization: {
             visual: { style: { theme: "default" } },
-            paymentMethods: { maxInstallments: 12 },
+            paymentMethods: { maxInstallments: 1, minInstallments: 1 },
           },
           callbacks: {
             onReady: () => {
