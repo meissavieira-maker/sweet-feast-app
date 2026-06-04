@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Painel do Admin — Doçaria Belle Maison" },
+      { title: "Painel do Admin — Meissa Vieira Confeitaria" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -102,7 +102,7 @@ function TopBar({ email, onLogout }: { email?: string | null; onLogout?: () => v
             <ArrowLeft className="h-3.5 w-3.5" /> Loja
           </Link>
           <div className="h-4 w-px bg-border" />
-          <span className="font-display text-lg text-foreground">Painel · Belle Maison</span>
+          <span className="font-display text-lg text-foreground">Painel · Meissa Vieira</span>
         </div>
         {email && (
           <div className="flex items-center gap-3 text-xs text-muted-foreground">

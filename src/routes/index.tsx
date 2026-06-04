@@ -14,13 +14,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Doçaria Belle Maison — Tortas, Bolos e Docinhos Artesanais" },
+      { title: "Meissa Vieira Confeitaria — Tortas, Bolos e Docinhos Artesanais" },
       {
         name: "description",
         content:
           "Tortas, bolos caseiros e docinhos gourmet feitos à mão todas as manhãs. Peça pelo app e receba em até 60 minutos.",
       },
-      { property: "og:title", content: "Doçaria Belle Maison" },
+      { property: "og:title", content: "Meissa Vieira Confeitaria" },
       { property: "og:description", content: "Doces artesanais entregues na sua porta em até 60 minutos." },
     ],
   }),
