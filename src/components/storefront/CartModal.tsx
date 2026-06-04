@@ -248,21 +248,9 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
     try {
       if (method === "pix") {
-        const pixRes = await createPixPayment({
-          data: {
-            order_id: orderId,
-            amount: snapshotTotal,
-            payer_name: name.trim(),
-            description: `Pedido #${orderId.slice(0, 8).toUpperCase()} — Meissa Vieira`,
-          },
-        });
+        // Manual PIX: no Mercado Pago API call — show static recipient key.
         setPending(pendingInfo);
-        setPix({
-          payment_id: pixRes.payment_id,
-          qr_code: pixRes.qr_code,
-          qr_code_base64: pixRes.qr_code_base64,
-          ticket_url: pixRes.ticket_url,
-        });
+        setPix({ payment_id: "", qr_code: "", qr_code_base64: "", ticket_url: "" });
         clear();
       } else {
         // Card → open brick
