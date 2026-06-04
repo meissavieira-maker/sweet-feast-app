@@ -1,8 +1,8 @@
-import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin, Copy, QrCode } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin, Copy, QrCode, CreditCard, Lock } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { formatBRL, useCart, type CartItem } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
-import { createPixPayment, checkPixPayment } from "@/lib/payments.functions";
+import { createPixPayment, checkPixPayment, createCardPayment, getPublicConfig } from "@/lib/payments.functions";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useStoreStatus } from "@/hooks/use-store-status";
 
 const DELIVERY_CITIES = [
   { id: "cachoeira", label: "Cachoeira", fee: 7 },
@@ -19,7 +20,11 @@ const DELIVERY_CITIES = [
 ] as const;
 
 const PICKUP_ADDRESS = "Rua Rodrigo Brandão, Número 32, Cachoeira - BA";
-const WHATSAPP_PHONE = "5575991074216"; // +55 (75) 99107-4216
+const WHATSAPP_PHONE = "5575991074216";
+const CLOSED_MESSAGE =
+  "Pedidos do Festival de Tortas suspensos temporariamente. Lembrando que as entregas e retiradas ocorrerão neste domingo a partir das 14h!";
+
+type PaymentMethod = "pix" | "card";
 
 type SuccessInfo = {
   orderId: string;
@@ -37,9 +42,46 @@ type PixInfo = {
   ticket_url: string;
 };
 
+declare global {
+  interface Window {
+    MercadoPago?: new (publicKey: string, options?: { locale?: string }) => {
+      bricks: () => {
+        create: (
+          type: string,
+          containerId: string,
+          settings: Record<string, unknown>,
+        ) => Promise<{ unmount: () => void }>;
+      };
+    };
+  }
+}
+
+function loadMpSdk(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (window.MercadoPago) return Promise.resolve();
+  const existing = document.querySelector<HTMLScriptElement>("script[data-mp-sdk]");
+  if (existing) {
+    return new Promise((resolve, reject) => {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("Falha ao carregar SDK do Mercado Pago")));
+    });
+  }
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://sdk.mercadopago.com/js/v2";
+    s.async = true;
+    s.dataset.mpSdk = "1";
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Falha ao carregar SDK do Mercado Pago"));
+    document.head.appendChild(s);
+  });
+}
+
 export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { items, setQty, remove, total, count, clear } = useCart();
+  const { isOpen: storeOpen } = useStoreStatus();
   const [mode, setMode] = useState<"entrega" | "retirada">("entrega");
+  const [method, setMethod] = useState<PaymentMethod>("pix");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [cityId, setCityId] = useState<string>("");
@@ -49,12 +91,15 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [pending, setPending] = useState<SuccessInfo | null>(null);
   const [success, setSuccess] = useState<SuccessInfo | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [cardStage, setCardStage] = useState<null | "loading" | "ready" | "processing">(null);
+  const [cardError, setCardError] = useState<string | null>(null);
+  const brickRef = useRef<{ unmount: () => void } | null>(null);
 
   const selectedCity = DELIVERY_CITIES.find((c) => c.id === cityId);
   const deliveryFee = mode === "entrega" ? (selectedCity?.fee ?? 0) : 0;
   const finalTotal = total + deliveryFee;
 
-  // Auto-poll Mercado Pago to detect payment approval
+  // Auto-poll Mercado Pago to detect PIX approval
   useEffect(() => {
     if (!pix || !pending || success) return;
     let stop = false;
@@ -66,13 +111,112 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           setPix(null);
         }
       } catch {
-        /* keep polling silently */
+        /* noop */
       }
     }, 5000);
     return () => { stop = true; clearInterval(id); };
   }, [pix, pending, success]);
 
+  // Mount the Mercado Pago Card Brick when entering card stage
+  useEffect(() => {
+    if (cardStage !== "loading" || !pending) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const cfg = await getPublicConfig();
+        if (!cfg.mp_public_key) {
+          throw new Error("Chave pública do Mercado Pago não configurada nas Configurações do admin.");
+        }
+        await loadMpSdk();
+        if (cancelled || !window.MercadoPago) return;
+        const mp = new window.MercadoPago(cfg.mp_public_key, { locale: "pt-BR" });
+        const builder = mp.bricks();
+        // Reset container
+        const container = document.getElementById("cardPaymentBrick_container");
+        if (container) container.innerHTML = "";
+        brickRef.current = await builder.create("cardPayment", "cardPaymentBrick_container", {
+          initialization: { amount: Number(pending.total.toFixed(2)) },
+          customization: {
+            visual: { style: { theme: "default" } },
+            paymentMethods: { maxInstallments: 12 },
+          },
+          callbacks: {
+            onReady: () => {
+              if (!cancelled) setCardStage("ready");
+            },
+            onError: (err: unknown) => {
+              const msg = (err as { message?: string })?.message ?? "Erro no formulário do cartão";
+              setCardError(msg);
+            },
+            onSubmit: async (cardFormData: {
+              token: string;
+              issuer_id?: string;
+              payment_method_id: string;
+              installments: number;
+              payer: { email: string; identification?: { type: string; number: string } };
+            }) => {
+              setCardStage("processing");
+              setCardError(null);
+              try {
+                const r = await createCardPayment({
+                  data: {
+                    order_id: pending.orderId,
+                    amount: pending.total,
+                    description: `Pedido #${pending.orderId.slice(0, 8).toUpperCase()} — Meissa Vieira`,
+                    token: cardFormData.token,
+                    payment_method_id: cardFormData.payment_method_id,
+                    issuer_id: cardFormData.issuer_id ?? null,
+                    installments: cardFormData.installments,
+                    payer: {
+                      email: cardFormData.payer.email,
+                      identification: cardFormData.payer.identification ?? null,
+                    },
+                  },
+                });
+                if (r.status === "approved") {
+                  setSuccess(pending);
+                  setCardStage(null);
+                  brickRef.current?.unmount();
+                  brickRef.current = null;
+                } else if (r.status === "in_process" || r.status === "pending") {
+                  setCardError("Pagamento em análise. Você será notificado assim que aprovado.");
+                  setCardStage("ready");
+                } else {
+                  setCardError(`Pagamento recusado (${r.status_detail || r.status}). Tente outro cartão.`);
+                  setCardStage("ready");
+                }
+              } catch (e: unknown) {
+                setCardError(e instanceof Error ? e.message : "Falha ao processar cartão");
+                setCardStage("ready");
+              }
+            },
+          },
+        });
+      } catch (e: unknown) {
+        if (!cancelled) {
+          setCardError(e instanceof Error ? e.message : "Não foi possível iniciar o pagamento por cartão");
+          setCardStage("ready");
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cardStage, pending]);
+
+  // Unmount brick on close
+  useEffect(() => {
+    if (!open && brickRef.current) {
+      try { brickRef.current.unmount(); } catch { /* noop */ }
+      brickRef.current = null;
+    }
+  }, [open]);
+
   async function handleCheckout() {
+    if (!storeOpen) {
+      toast.error(CLOSED_MESSAGE);
+      return;
+    }
     if (!name.trim()) {
       toast.error("Informe seu nome");
       return;
@@ -119,24 +263,32 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     };
 
     try {
-      const pixRes = await createPixPayment({
-        data: {
-          order_id: orderId,
-          amount: snapshotTotal,
-          payer_name: name.trim(),
-          description: `Pedido #${orderId.slice(0, 8).toUpperCase()} — Meissa Vieira`,
-        },
-      });
-      setPending(pendingInfo);
-      setPix({
-        payment_id: pixRes.payment_id,
-        qr_code: pixRes.qr_code,
-        qr_code_base64: pixRes.qr_code_base64,
-        ticket_url: pixRes.ticket_url,
-      });
-      clear();
+      if (method === "pix") {
+        const pixRes = await createPixPayment({
+          data: {
+            order_id: orderId,
+            amount: snapshotTotal,
+            payer_name: name.trim(),
+            description: `Pedido #${orderId.slice(0, 8).toUpperCase()} — Meissa Vieira`,
+          },
+        });
+        setPending(pendingInfo);
+        setPix({
+          payment_id: pixRes.payment_id,
+          qr_code: pixRes.qr_code,
+          qr_code_base64: pixRes.qr_code_base64,
+          ticket_url: pixRes.ticket_url,
+        });
+        clear();
+      } else {
+        // Card → open brick
+        setPending(pendingInfo);
+        setCardStage("loading");
+        setCardError(null);
+        clear();
+      }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Falha ao gerar pagamento PIX";
+      const msg = e instanceof Error ? e.message : "Falha ao iniciar pagamento";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -168,42 +320,60 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
   function handleClose(v: boolean) {
     if (!v) {
+      if (brickRef.current) {
+        try { brickRef.current.unmount(); } catch { /* noop */ }
+        brickRef.current = null;
+      }
       setSuccess(null);
       setPix(null);
       setPending(null);
+      setCardStage(null);
+      setCardError(null);
       setName("");
       setPhone("");
       setAddress("");
       setCityId("");
+      setMethod("pix");
     }
     onOpenChange(v);
   }
 
+  const showCard = cardStage !== null && !success;
+  const showPix = !!pix && !success && !showCard;
+  const showCart = !success && !showPix && !showCard;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg gap-0 overflow-hidden rounded-3xl border-border bg-card p-0">
         <div className="border-b border-border px-6 py-4">
           <DialogTitle className="font-display text-xl text-card-foreground">
-            {success ? "Pedido confirmado" : pix ? "Pague com PIX" : "Seu Carrinho"}
+            {success
+              ? "Pedido confirmado"
+              : showPix
+                ? "Pague com PIX"
+                : showCard
+                  ? "Pague com Cartão"
+                  : "Seu Carrinho"}
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             {success
               ? "Em instantes a doçaria começa a preparar."
-              : pix
+              : showPix
                 ? "Escaneie o QR Code ou copie o código abaixo no seu app do banco."
-                : `${count} ${count === 1 ? "item adicionado" : "itens adicionados"}`}
+                : showCard
+                  ? "Formulário seguro do Mercado Pago — seus dados não passam por nós."
+                  : `${count} ${count === 1 ? "item adicionado" : "itens adicionados"}`}
           </DialogDescription>
         </div>
 
-        {pix && !success ? (
+        {showPix && (
           <div className="px-6 py-6 text-center">
             <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               <QrCode className="h-3.5 w-3.5" /> Mercado Pago · PIX
             </div>
-            {pix.qr_code_base64 ? (
+            {pix!.qr_code_base64 ? (
               <img
-                src={`data:image/png;base64,${pix.qr_code_base64}`}
+                src={`data:image/png;base64,${pix!.qr_code_base64}`}
                 alt="QR Code PIX"
                 className="mx-auto mt-4 h-56 w-56 rounded-2xl border border-border bg-white p-2"
               />
@@ -213,13 +383,13 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               </div>
             )}
             <p className="mt-4 font-display text-xl text-primary">{formatBRL(pending?.total ?? 0)}</p>
-            {pix.qr_code && (
+            {pix!.qr_code && (
               <div className="mx-auto mt-4 max-w-sm rounded-2xl border border-border bg-secondary/40 p-3 text-left">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                   PIX copia e cola
                 </p>
                 <p className="mt-1 break-all font-mono text-[11px] text-card-foreground">
-                  {pix.qr_code.slice(0, 90)}{pix.qr_code.length > 90 ? "…" : ""}
+                  {pix!.qr_code.slice(0, 90)}{pix!.qr_code.length > 90 ? "…" : ""}
                 </p>
                 <button
                   onClick={copyPix}
@@ -241,7 +411,36 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               Detectamos o pagamento automaticamente assim que cair.
             </p>
           </div>
-        ) : success ? (
+        )}
+
+        {showCard && (
+          <div className="px-6 py-5">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                <Lock className="h-3 w-3" /> Pagamento seguro · Mercado Pago
+              </div>
+              <span className="font-display text-base text-primary">{formatBRL(pending?.total ?? 0)}</span>
+            </div>
+            {cardStage === "loading" && (
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregando formulário…
+              </div>
+            )}
+            <div id="cardPaymentBrick_container" className="min-h-[200px]" />
+            {cardStage === "processing" && (
+              <div className="mt-3 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Processando pagamento…
+              </div>
+            )}
+            {cardError && (
+              <p className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+                {cardError}
+              </p>
+            )}
+          </div>
+        )}
+
+        {success && (
           <div className="px-6 py-8 text-center">
             <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
             <p className="mt-4 font-display text-lg text-card-foreground">
@@ -282,7 +481,9 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               Continuar comprando
             </button>
           </div>
-        ) : (
+        )}
+
+        {showCart && (
           <>
             <div className="max-h-[36vh] overflow-y-auto px-6 py-5">
               {items.length === 0 ? (
@@ -363,6 +564,26 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                   />
                 </div>
 
+                <p className="mt-4 mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Forma de pagamento
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <ModeButton
+                    active={method === "pix"}
+                    onClick={() => setMethod("pix")}
+                    icon={<QrCode className="h-4 w-4" />}
+                    label="Pagar com PIX"
+                    hint="Aprovação imediata"
+                  />
+                  <ModeButton
+                    active={method === "card"}
+                    onClick={() => setMethod("card")}
+                    icon={<CreditCard className="h-4 w-4" />}
+                    label="Pagar com Cartão"
+                    hint="Até 12x"
+                  />
+                </div>
+
                 <div className="mt-4 space-y-2">
                   <input
                     value={name}
@@ -432,14 +653,21 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                   </div>
                 </dl>
 
+                {!storeOpen && (
+                  <div className="mt-4 rounded-xl border border-rose-300/50 bg-rose-50 p-3 text-sm text-rose-900 dark:border-rose-500/30 dark:bg-rose-950/40 dark:text-rose-200">
+                    <p className="font-semibold">🔴 Pedidos pausados</p>
+                    <p className="mt-1 text-xs leading-relaxed">{CLOSED_MESSAGE}</p>
+                  </div>
+                )}
+
                 <button
-                  disabled={submitting}
+                  disabled={submitting || !storeOpen}
                   onClick={handleCheckout}
-                  className="mt-5 group flex w-full items-center justify-center gap-2 rounded-full bg-cherry px-6 py-4 text-base font-semibold text-cherry-foreground shadow-glow transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+                  className="mt-5 group flex w-full items-center justify-center gap-2 rounded-full bg-cherry px-6 py-4 text-base font-semibold text-cherry-foreground shadow-glow transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  Confirmar Pedido
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  {storeOpen ? "Confirmar Pedido" : "Pedidos suspensos"}
+                  {storeOpen && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
                 </button>
               </div>
             )}
