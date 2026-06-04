@@ -78,12 +78,18 @@ function AdminPage() {
             <TabsTrigger value="pedidos" className="gap-1.5">
               <ShoppingBag className="h-4 w-4" /> Pedidos
             </TabsTrigger>
+            <TabsTrigger value="config" className="gap-1.5">
+              <Settings className="h-4 w-4" /> Configurações
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="produtos" className="mt-6">
             <AdminProducts />
           </TabsContent>
           <TabsContent value="pedidos" className="mt-6">
             <AdminOrders />
+          </TabsContent>
+          <TabsContent value="config" className="mt-6">
+            <AdminSettings />
           </TabsContent>
         </Tabs>
       </main>
