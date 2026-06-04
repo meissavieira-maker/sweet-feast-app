@@ -60,7 +60,11 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     }
     setSubmitting(true);
     const fullAddress =
-      mode === "entrega" && selectedCity ? `${address.trim()} — ${selectedCity.label}` : "";
+      mode === "entrega" && selectedCity
+        ? `${address.trim()} — ${selectedCity.label}`
+        : PICKUP_ADDRESS;
+    const snapshotItems = items.map((i) => ({ ...i }));
+    const snapshotTotal = finalTotal;
     const { data, error } = await supabase.rpc("place_order", {
       _customer_name: name.trim(),
       _customer_phone: phone.trim(),
@@ -75,7 +79,15 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       toast.error(error.message || "Não foi possível concluir o pedido");
       return;
     }
-    setSuccess(typeof data === "string" ? data : "ok");
+    const orderId = typeof data === "string" ? data : "";
+    setSuccess({
+      orderId,
+      name: name.trim(),
+      mode,
+      address: fullAddress,
+      items: snapshotItems,
+      total: snapshotTotal,
+    });
     clear();
   }
 
