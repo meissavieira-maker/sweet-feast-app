@@ -5,8 +5,8 @@ export type Category = {
 
 export const categories: Category[] = [
   { id: "fatias", label: "Fatias de Torta" },
-  { id: "bolos", label: "Bolos Caseiros" },
-  { id: "docinhos", label: "Docinhos" },
+  { id: "bolos", label: "Caseirinhos Gourmet" },
+  { id: "docinhos", label: "Pudim" },
 ];
 
 export type Product = {
