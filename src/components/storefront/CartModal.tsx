@@ -244,11 +244,13 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     const pendingInfo: SuccessInfo = {
       orderId,
       name: name.trim(),
+      phone: phone.trim(),
       mode,
       address: fullAddress,
       items: snapshotItems,
       total: snapshotTotal,
     };
+
 
     try {
       if (method === "pix") {
