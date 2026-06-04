@@ -31,11 +31,13 @@ type PaymentMethod = "pix" | "card";
 type SuccessInfo = {
   orderId: string;
   name: string;
+  phone: string;
   mode: "entrega" | "retirada";
   address: string;
   items: CartItem[];
   total: number;
 };
+
 
 type PixInfo = {
   payment_id: string;
@@ -242,11 +244,13 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     const pendingInfo: SuccessInfo = {
       orderId,
       name: name.trim(),
+      phone: phone.trim(),
       mode,
       address: fullAddress,
       items: snapshotItems,
       total: snapshotTotal,
     };
+
 
     try {
       if (method === "pix") {
@@ -676,28 +680,28 @@ function ModeButton({
 function buildWhatsAppMessage(s: SuccessInfo) {
   const shortId = s.orderId ? s.orderId.slice(0, 8).toUpperCase() : "—";
   const modoLabel = s.mode === "entrega" ? "Entrega (Motoboy)" : "Retirada no Local";
+  const endereco = s.mode === "entrega" ? s.address : PICKUP_ADDRESS;
   const itensTxt = s.items
-    .map((i) => `• ${i.qty}x ${i.product.name} — ${formatBRL(i.product.price * i.qty)}`)
+    .map((i) => `🍰 ${i.qty}x ${i.product.name} — ${formatBRL(i.product.price * i.qty)}`)
     .join("\n");
-  const enderecoLinha =
-    s.mode === "entrega"
-      ? `📍 Endereço de entrega: ${s.address}`
-      : `📍 Retirada em: ${PICKUP_ADDRESS}`;
   return [
-    `*Comanda — Meissa Vieira Confeitaria*`,
+    `🍰 *1º Festival de Fatias — Meissa Vieira* 🍰`,
+    `-----------------------------------------`,
+    `🆔 *Pedido:* #${shortId}`,
+    `👤 *Cliente:* ${s.name}`,
+    `📞 *WhatsApp:* ${s.phone || "—"}`,
+    `🛵 *Forma de Envio:* ${modoLabel}`,
+    `📍 *Endereço:* ${endereco}`,
     ``,
-    `Pedido: *#${shortId}*`,
-    `Status: *[PAGO]*`,
-    `Cliente: ${s.name}`,
-    `Envio: *${modoLabel}*`,
-    enderecoLinha,
-    ``,
-    `*Itens:*`,
+    `🛒 *Fatias Reservadas:*`,
     itensTxt,
     ``,
-    `*Total: ${formatBRL(s.total)}*`,
+    `💰 *Total Geral:* ${formatBRL(s.total)}`,
+    `-----------------------------------------`,
+    `👉 *Lembrete:* Seus produtos estão reservados! Os envios e retiradas começam neste Domingo a partir das 14h.`,
   ].join("\n");
 }
+
 
 function openWhatsAppOrder(s: SuccessInfo) {
   const mensagem = buildWhatsAppMessage(s);
