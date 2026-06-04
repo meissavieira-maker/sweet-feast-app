@@ -134,7 +134,7 @@ export const createCardPayment = createServerFn({ method: "POST" })
       transaction_amount: Number(data.amount.toFixed(2)),
       token: data.token,
       description: data.description,
-      installments: data.installments,
+      installments: 1,
       payment_method_id: data.payment_method_id,
       external_reference: data.order_id,
       payer: {
