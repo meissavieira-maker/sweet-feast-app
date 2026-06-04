@@ -117,13 +117,42 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         </div>
 
         {success ? (
-          <div className="px-6 py-10 text-center">
+          <div className="px-6 py-8 text-center">
             <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
-            <p className="mt-4 font-display text-lg text-card-foreground">Obrigado, {name || "cliente"}!</p>
-            <p className="mt-1 text-sm text-muted-foreground">Você receberá atualizações pelo telefone informado.</p>
+            <p className="mt-4 font-display text-lg text-card-foreground">
+              Obrigado, {success.name || "cliente"}!
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Pedido <span className="font-mono text-foreground">#{success.orderId.slice(0, 8).toUpperCase()}</span> registrado.
+            </p>
+
+            {success.mode === "retirada" && (
+              <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-border bg-secondary/50 p-4 text-left">
+                <div className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      Endereço para retirada
+                    </p>
+                    <p className="mt-1 text-sm text-card-foreground">{PICKUP_ADDRESS}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <a
+              href={buildWhatsAppLink(success)}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-6 inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-4 text-base font-semibold text-white shadow-glow transition hover:brightness-110"
+            >
+              <WhatsAppIcon className="h-5 w-5" />
+              Enviar Comanda para o WhatsApp
+            </a>
+
             <button
               onClick={() => handleClose(false)}
-              className="mt-6 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground"
+              className="mt-3 rounded-full px-6 py-2 text-sm font-medium text-muted-foreground hover:text-primary"
             >
               Continuar comprando
             </button>
