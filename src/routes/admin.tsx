@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Loader2, LogOut, Package, ShoppingBag, ArrowLeft } from "lucide-react";
+import { Loader2, LogOut, Package, ShoppingBag, ArrowLeft, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { AdminAuth } from "@/components/admin/AdminAuth";
 import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminOrders } from "@/components/admin/AdminOrders";
+import { AdminSettings } from "@/components/admin/AdminSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/admin")({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/admin")({
 
 function AdminPage() {
   const { loading, session, isAdmin, refresh } = useAdminAuth();
-  const [tab, setTab] = useState<"produtos" | "pedidos">("produtos");
+  const [tab, setTab] = useState<"produtos" | "pedidos" | "config">("produtos");
 
   if (loading) {
     return (
@@ -77,12 +78,18 @@ function AdminPage() {
             <TabsTrigger value="pedidos" className="gap-1.5">
               <ShoppingBag className="h-4 w-4" /> Pedidos
             </TabsTrigger>
+            <TabsTrigger value="config" className="gap-1.5">
+              <Settings className="h-4 w-4" /> Configurações
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="produtos" className="mt-6">
             <AdminProducts />
           </TabsContent>
           <TabsContent value="pedidos" className="mt-6">
             <AdminOrders />
+          </TabsContent>
+          <TabsContent value="config" className="mt-6">
+            <AdminSettings />
           </TabsContent>
         </Tabs>
       </main>
