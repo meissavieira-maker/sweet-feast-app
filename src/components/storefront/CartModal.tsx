@@ -138,7 +138,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           initialization: { amount: Number(pending.total.toFixed(2)) },
           customization: {
             visual: { style: { theme: "default" } },
-            paymentMethods: { maxInstallments: 12 },
+            paymentMethods: { maxInstallments: 1, minInstallments: 1 },
           },
           callbacks: {
             onReady: () => {
@@ -166,7 +166,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                     token: cardFormData.token,
                     payment_method_id: cardFormData.payment_method_id,
                     issuer_id: cardFormData.issuer_id ?? null,
-                    installments: cardFormData.installments,
+                    installments: 1,
                     payer: {
                       email: cardFormData.payer.email,
                       identification: cardFormData.payer.identification ?? null,
@@ -580,7 +580,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                     onClick={() => setMethod("card")}
                     icon={<CreditCard className="h-4 w-4" />}
                     label="Pagar com Cartão"
-                    hint="Até 12x"
+                    hint="À vista"
                   />
                 </div>
 
