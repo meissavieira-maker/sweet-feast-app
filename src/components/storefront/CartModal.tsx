@@ -174,7 +174,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                     onClick={() => setMode("entrega")}
                     icon={<Bike className="h-4 w-4" />}
                     label="Entrega"
-                    hint={total >= 80 ? "Frete grátis" : "R$ 8,90"}
+                    hint={selectedCity ? formatBRL(selectedCity.fee) : "Motoboy"}
                   />
                   <ModeButton
                     active={mode === "retirada"}
@@ -201,13 +201,28 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                     className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-primary"
                   />
                   {mode === "entrega" && (
-                    <input
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="Endereço de entrega"
-                      maxLength={240}
-                      className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-primary"
-                    />
+                    <>
+                      <select
+                        value={cityId}
+                        onChange={(e) => setCityId(e.target.value)}
+                        required
+                        className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-primary"
+                      >
+                        <option value="">Selecione a cidade de entrega…</option>
+                        {DELIVERY_CITIES.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label} — {formatBRL(c.fee)}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="Endereço (rua, número, bairro, referência)"
+                        maxLength={240}
+                        className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-primary"
+                      />
+                    </>
                   )}
                 </div>
 
