@@ -37,7 +37,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [cityId, setCityId] = useState<string>("");
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [success, setSuccess] = useState<SuccessInfo | null>(null);
 
   const selectedCity = DELIVERY_CITIES.find((c) => c.id === cityId);
   const deliveryFee = mode === "entrega" ? (selectedCity?.fee ?? 0) : 0;
