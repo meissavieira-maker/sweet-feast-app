@@ -36,16 +36,24 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       toast.error("Informe seu nome");
       return;
     }
-    if (mode === "entrega" && !address.trim()) {
-      toast.error("Informe o endereço de entrega");
-      return;
+    if (mode === "entrega") {
+      if (!selectedCity) {
+        toast.error("Selecione a cidade de entrega");
+        return;
+      }
+      if (!address.trim()) {
+        toast.error("Informe o endereço de entrega");
+        return;
+      }
     }
     setSubmitting(true);
+    const fullAddress =
+      mode === "entrega" && selectedCity ? `${address.trim()} — ${selectedCity.label}` : "";
     const { data, error } = await supabase.rpc("place_order", {
       _customer_name: name.trim(),
       _customer_phone: phone.trim(),
       _mode: mode,
-      _address: mode === "entrega" ? address.trim() : "",
+      _address: fullAddress,
       _delivery_fee: deliveryFee,
       _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
     });
@@ -65,6 +73,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       setName("");
       setPhone("");
       setAddress("");
+      setCityId("");
     }
     onOpenChange(v);
   }
