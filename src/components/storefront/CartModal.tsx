@@ -430,7 +430,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
             <a
               href={buildWhatsAppLink(success)}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="mt-6 inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-4 text-base font-semibold text-white shadow-glow transition hover:brightness-110"
             >
               <WhatsAppIcon className="h-5 w-5" />
