@@ -701,7 +701,7 @@ function buildWhatsAppMessage(s: SuccessInfo) {
 
 function openWhatsAppOrder(s: SuccessInfo) {
   const mensagem = buildWhatsAppMessage(s);
-  window.open(`https://wa.me/${WHATSAPP_PHONE}?text=` + encodeURIComponent(mensagem), "_blank");
+  window.open("https://wa.me/5575991074216?text=" + encodeURIComponent(mensagem), "_blank");
 }
 
 function WhatsAppIcon({ className }: { className?: string }) {
