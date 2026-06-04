@@ -293,27 +293,36 @@ function ProductDialog({
           </div>
 
           <Field label="Imagem">
-            <div className="flex items-center gap-3">
-              {form.image_url ? (
-                <img src={form.image_url} alt="" className="h-16 w-16 rounded-lg object-cover" />
-              ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground">
-                  sem
-                </div>
-              )}
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm hover:border-primary">
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {uploading ? "Enviando..." : "Enviar imagem"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) void handleUpload(f);
-                  }}
-                />
-              </label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                {form.image_url ? (
+                  <img src={form.image_url} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground">
+                    sem
+                  </div>
+                )}
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm hover:border-primary">
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {uploading ? "Enviando..." : "Enviar arquivo"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void handleUpload(f);
+                    }}
+                  />
+                </label>
+              </div>
+              <input
+                type="url"
+                value={form.image_url ?? ""}
+                onChange={(e) => set("image_url", e.target.value)}
+                placeholder="… ou cole um link de imagem (https://…)"
+                className="input"
+              />
             </div>
           </Field>
         </div>

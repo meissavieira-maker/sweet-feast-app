@@ -12,8 +12,8 @@ export function StoreHeader() {
       <div className="relative mx-auto max-w-6xl px-5 pt-8 pb-12 sm:pt-12 sm:pb-20">
         <div className="flex items-center justify-between text-primary-foreground">
           <div className="flex items-center gap-2">
-            <span className="font-display text-xl italic">d.</span>
-            <span className="text-xs tracking-[0.25em] uppercase opacity-80">Desde 1998</span>
+            <span className="font-display text-xl italic">m.</span>
+            <span className="text-xs tracking-[0.25em] uppercase opacity-80">Feito com Amor</span>
           </div>
           <span
             className={`inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/30 px-3 py-1.5 text-xs font-medium backdrop-blur-md ${
@@ -26,9 +26,9 @@ export function StoreHeader() {
         </div>
 
         <div className="mt-14 sm:mt-24 max-w-2xl text-primary-foreground">
-          <p className="text-[11px] tracking-[0.35em] uppercase text-gold mb-3">Doceria Artesanal</p>
+          <p className="text-[11px] tracking-[0.35em] uppercase text-gold mb-3">Confeitaria Artesanal</p>
           <h1 className="font-display text-5xl sm:text-7xl leading-[1.02] font-medium">
-            Doçaria <em className="text-gold not-italic font-normal italic">Belle</em> Maison
+            Meissa <em className="text-gold not-italic font-normal italic">Vieira</em> Confeitaria
           </h1>
           <p className="mt-5 max-w-md text-sm sm:text-base text-white/80 leading-relaxed">
             Tortas, bolos e docinhos feitos à mão todas as manhãs. Entrega na sua porta em até 60 minutos.

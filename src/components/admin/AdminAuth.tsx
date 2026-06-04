@@ -51,7 +51,7 @@ export function AdminAuth({ onAuthed }: { onAuthed: () => void }) {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {mode === "login"
-            ? "Acesse o painel da Doçaria Belle Maison."
+            ? "Acesse o painel da Meissa Vieira Confeitaria."
             : "A primeira conta criada vira administradora automaticamente."}
         </p>
 

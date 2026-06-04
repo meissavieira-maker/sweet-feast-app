@@ -10,16 +10,25 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
+const DELIVERY_CITIES = [
+  { id: "cachoeira", label: "Cachoeira", fee: 7 },
+  { id: "sao-felix", label: "São Félix", fee: 8 },
+  { id: "capoeirucu", label: "Capoeiruçu", fee: 20 },
+  { id: "muritiba", label: "Muritiba", fee: 20 },
+] as const;
+
 export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { items, setQty, remove, total, count, clear } = useCart();
   const [mode, setMode] = useState<"entrega" | "retirada">("entrega");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [cityId, setCityId] = useState<string>("");
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const deliveryFee = mode === "entrega" ? (total >= 80 ? 0 : 8.9) : 0;
+  const selectedCity = DELIVERY_CITIES.find((c) => c.id === cityId);
+  const deliveryFee = mode === "entrega" ? (selectedCity?.fee ?? 0) : 0;
   const finalTotal = total + deliveryFee;
 
   async function handleCheckout() {
@@ -27,16 +36,24 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       toast.error("Informe seu nome");
       return;
     }
-    if (mode === "entrega" && !address.trim()) {
-      toast.error("Informe o endereço de entrega");
-      return;
+    if (mode === "entrega") {
+      if (!selectedCity) {
+        toast.error("Selecione a cidade de entrega");
+        return;
+      }
+      if (!address.trim()) {
+        toast.error("Informe o endereço de entrega");
+        return;
+      }
     }
     setSubmitting(true);
+    const fullAddress =
+      mode === "entrega" && selectedCity ? `${address.trim()} — ${selectedCity.label}` : "";
     const { data, error } = await supabase.rpc("place_order", {
       _customer_name: name.trim(),
       _customer_phone: phone.trim(),
       _mode: mode,
-      _address: mode === "entrega" ? address.trim() : "",
+      _address: fullAddress,
       _delivery_fee: deliveryFee,
       _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
     });
@@ -56,6 +73,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       setName("");
       setPhone("");
       setAddress("");
+      setCityId("");
     }
     onOpenChange(v);
   }
@@ -156,7 +174,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                     onClick={() => setMode("entrega")}
                     icon={<Bike className="h-4 w-4" />}
                     label="Entrega"
-                    hint={total >= 80 ? "Frete grátis" : "R$ 8,90"}
+                    hint={selectedCity ? formatBRL(selectedCity.fee) : "Motoboy"}
                   />
                   <ModeButton
                     active={mode === "retirada"}
@@ -183,13 +201,28 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                     className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-primary"
                   />
                   {mode === "entrega" && (
-                    <input
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="Endereço de entrega"
-                      maxLength={240}
-                      className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-primary"
-                    />
+                    <>
+                      <select
+                        value={cityId}
+                        onChange={(e) => setCityId(e.target.value)}
+                        required
+                        className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-primary"
+                      >
+                        <option value="">Selecione a cidade de entrega…</option>
+                        {DELIVERY_CITIES.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label} — {formatBRL(c.fee)}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="Endereço (rua, número, bairro, referência)"
+                        maxLength={240}
+                        className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-primary"
+                      />
+                    </>
                   )}
                 </div>
 
