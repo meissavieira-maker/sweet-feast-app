@@ -68,7 +68,7 @@ export function StoreHeader() {
             Meissa <em className="text-gold not-italic font-normal italic">Vieira</em> Confeitaria
           </h1>
           <p
-            className="mt-5 font-display text-lg sm:text-2xl text-gold italic"
+            className="mt-5 font-display text-xl sm:text-2xl font-bold text-gold italic"
             style={{ textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}
           >
             1º Festival de Fatias no Delivery.
