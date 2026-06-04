@@ -166,7 +166,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                     token: cardFormData.token,
                     payment_method_id: cardFormData.payment_method_id,
                     issuer_id: cardFormData.issuer_id ?? null,
-                    installments: cardFormData.installments,
+                    installments: 1,
                     payer: {
                       email: cardFormData.payer.email,
                       identification: cardFormData.payer.identification ?? null,
