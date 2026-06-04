@@ -68,7 +68,10 @@ export type Database = {
           delivery_fee: number
           id: string
           mode: Database["public"]["Enums"]["order_mode"]
+          mp_payment_id: string | null
+          mp_preference_id: string | null
           notes: string | null
+          payment_status: string
           status: Database["public"]["Enums"]["order_status"]
           subtotal: number
           total: number
@@ -82,7 +85,10 @@ export type Database = {
           delivery_fee?: number
           id?: string
           mode: Database["public"]["Enums"]["order_mode"]
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
           notes?: string | null
+          payment_status?: string
           status?: Database["public"]["Enums"]["order_status"]
           subtotal: number
           total: number
@@ -96,7 +102,10 @@ export type Database = {
           delivery_fee?: number
           id?: string
           mode?: Database["public"]["Enums"]["order_mode"]
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
           notes?: string | null
+          payment_status?: string
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
@@ -179,6 +188,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      mark_order_paid: {
+        Args: { _mp_payment_id: string; _order_id: string }
+        Returns: undefined
       }
       place_order: {
         Args: {
