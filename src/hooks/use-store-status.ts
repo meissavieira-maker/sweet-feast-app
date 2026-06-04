@@ -16,7 +16,7 @@ export function useStoreStatus() {
   useEffect(() => {
     void refresh();
     const ch = supabase
-      .channel("app_settings_store_open")
+      .channel(`app_settings_store_open_${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "app_settings", filter: "key=eq.store_open" },
