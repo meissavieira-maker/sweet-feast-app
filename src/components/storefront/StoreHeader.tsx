@@ -1,7 +1,8 @@
 import heroImg from "@/assets/hero-doceria.jpg";
+import { useStoreStatus } from "@/hooks/use-store-status";
 
 export function StoreHeader() {
-  const isOpen = true;
+  const { isOpen } = useStoreStatus();
   return (
     <header className="relative overflow-hidden">
       <div className="absolute inset-0">
@@ -21,7 +22,7 @@ export function StoreHeader() {
             }`}
           >
             <span className={`h-2 w-2 rounded-full ${isOpen ? "bg-emerald-400" : "bg-rose-400"} animate-pulse`} />
-            {isOpen ? "Aberto agora" : "Fechado"}
+            {isOpen ? "🟢 Aberto agora" : "🔴 Pedidos Pausados"}
           </span>
         </div>
 
