@@ -427,15 +427,14 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               </div>
             )}
 
-            <a
-              href={buildWhatsAppLink(success)}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => openWhatsAppOrder(success)}
               className="mt-6 inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-4 text-base font-semibold text-white shadow-glow transition hover:brightness-110"
             >
               <WhatsAppIcon className="h-5 w-5" />
               Enviar Comanda para o WhatsApp
-            </a>
+            </button>
 
             <button
               onClick={() => handleClose(false)}
@@ -674,7 +673,7 @@ function ModeButton({
   );
 }
 
-function buildWhatsAppLink(s: SuccessInfo) {
+function buildWhatsAppMessage(s: SuccessInfo) {
   const shortId = s.orderId ? s.orderId.slice(0, 8).toUpperCase() : "—";
   const modoLabel = s.mode === "entrega" ? "Entrega (Motoboy)" : "Retirada no Local";
   const itensTxt = s.items
@@ -684,7 +683,7 @@ function buildWhatsAppLink(s: SuccessInfo) {
     s.mode === "entrega"
       ? `📍 Endereço de entrega: ${s.address}`
       : `📍 Retirada em: ${PICKUP_ADDRESS}`;
-  const msg = [
+  return [
     `*Comanda — Meissa Vieira Confeitaria*`,
     ``,
     `Pedido: *#${shortId}*`,
@@ -698,7 +697,11 @@ function buildWhatsAppLink(s: SuccessInfo) {
     ``,
     `*Total: ${formatBRL(s.total)}*`,
   ].join("\n");
-  return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`;
+}
+
+function openWhatsAppOrder(s: SuccessInfo) {
+  const mensagem = buildWhatsAppMessage(s);
+  window.open(`https://wa.me/${WHATSAPP_PHONE}?text=` + encodeURIComponent(mensagem), "_blank");
 }
 
 function WhatsAppIcon({ className }: { className?: string }) {
