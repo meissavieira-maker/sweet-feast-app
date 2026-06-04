@@ -32,14 +32,16 @@ jobs:
 
       - name: Build static site
         run: bun run build
+        env:
+          NITRO_PRESET: static
 
-      - name: Copy CNAME to dist
-        run: cp CNAME dist/
+      - name: Copy CNAME to output
+        run: cp CNAME .output/public/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: .output/public
 
       - name: Deploy to GitHub Pages
         id: deployment
