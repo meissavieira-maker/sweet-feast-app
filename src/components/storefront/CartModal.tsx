@@ -580,7 +580,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                     onClick={() => setMethod("card")}
                     icon={<CreditCard className="h-4 w-4" />}
                     label="Pagar com Cartão"
-                    hint="Até 12x"
+                    hint="À vista"
                   />
                 </div>
 
