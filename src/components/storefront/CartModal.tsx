@@ -92,7 +92,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [pix, setPix] = useState<PixInfo | null>(null);
   const [pending, setPending] = useState<SuccessInfo | null>(null);
   const [success, setSuccess] = useState<SuccessInfo | null>(null);
-  const [confirming, setConfirming] = useState(false);
+  
   const [cardStage, setCardStage] = useState<null | "loading" | "ready" | "processing">(null);
   const [cardError, setCardError] = useState<string | null>(null);
   const brickRef = useRef<{ unmount: () => void } | null>(null);
