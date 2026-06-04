@@ -277,6 +277,19 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                       />
                     </>
                   )}
+                  {mode === "retirada" && (
+                    <div className="rounded-xl border border-border bg-card p-3">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="mt-0.5 h-4 w-4 text-primary" />
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                            Endereço para retirada
+                          </p>
+                          <p className="mt-0.5 text-sm text-card-foreground">{PICKUP_ADDRESS}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <dl className="mt-4 space-y-1.5 text-sm">
