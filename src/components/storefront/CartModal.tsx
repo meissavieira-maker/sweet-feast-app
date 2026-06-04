@@ -2,7 +2,7 @@ import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, Ma
 import { useEffect, useRef, useState } from "react";
 import { formatBRL, useCart, type CartItem } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
-import { createPixPayment, checkPixPayment, createCardPayment, getPublicConfig } from "@/lib/payments.functions";
+import { createCardPayment, getPublicConfig } from "@/lib/payments.functions";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,8 @@ const DELIVERY_CITIES = [
 
 const PICKUP_ADDRESS = "Rua Rodrigo Brandão, Número 32, Cachoeira - BA";
 const WHATSAPP_PHONE = "5575991074216";
+const PIX_KEY = "meissavieira@hotmail.com";
+const PIX_BENEFICIARY = "Meissa Vieira dos Santos Mendes";
 const CLOSED_MESSAGE =
   "Pedidos do Festival de Tortas suspensos temporariamente. Lembrando que as entregas e retiradas ocorrerão neste domingo a partir das 14h!";
 
@@ -90,7 +92,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [pix, setPix] = useState<PixInfo | null>(null);
   const [pending, setPending] = useState<SuccessInfo | null>(null);
   const [success, setSuccess] = useState<SuccessInfo | null>(null);
-  const [confirming, setConfirming] = useState(false);
+  
   const [cardStage, setCardStage] = useState<null | "loading" | "ready" | "processing">(null);
   const [cardError, setCardError] = useState<string | null>(null);
   const brickRef = useRef<{ unmount: () => void } | null>(null);
@@ -99,23 +101,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const deliveryFee = mode === "entrega" ? (selectedCity?.fee ?? 0) : 0;
   const finalTotal = total + deliveryFee;
 
-  // Auto-poll Mercado Pago to detect PIX approval
-  useEffect(() => {
-    if (!pix || !pending || success) return;
-    let stop = false;
-    const id = setInterval(async () => {
-      try {
-        const r = await checkPixPayment({ data: { payment_id: pix.payment_id, order_id: pending.orderId } });
-        if (!stop && r.status === "approved") {
-          setSuccess(pending);
-          setPix(null);
-        }
-      } catch {
-        /* noop */
-      }
-    }, 5000);
-    return () => { stop = true; clearInterval(id); };
-  }, [pix, pending, success]);
+  // Manual PIX flow — no automatic polling.
 
   // Mount the Mercado Pago Card Brick when entering card stage
   useEffect(() => {
@@ -264,21 +250,9 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
     try {
       if (method === "pix") {
-        const pixRes = await createPixPayment({
-          data: {
-            order_id: orderId,
-            amount: snapshotTotal,
-            payer_name: name.trim(),
-            description: `Pedido #${orderId.slice(0, 8).toUpperCase()} — Meissa Vieira`,
-          },
-        });
+        // Manual PIX: no Mercado Pago API call — show static recipient key.
         setPending(pendingInfo);
-        setPix({
-          payment_id: pixRes.payment_id,
-          qr_code: pixRes.qr_code,
-          qr_code_base64: pixRes.qr_code_base64,
-          ticket_url: pixRes.ticket_url,
-        });
+        setPix({ payment_id: "", qr_code: "", qr_code_base64: "", ticket_url: "" });
         clear();
       } else {
         // Card → open brick
@@ -295,27 +269,14 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     }
   }
 
-  async function handleConfirmPaid() {
-    if (!pix || !pending) return;
-    setConfirming(true);
-    try {
-      const r = await checkPixPayment({ data: { payment_id: pix.payment_id, order_id: pending.orderId } });
-      if (r.status === "approved") {
-        setSuccess(pending);
-        setPix(null);
-      } else {
-        toast.message("Pagamento ainda não identificado. Tente novamente em alguns segundos.");
-      }
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível verificar o pagamento");
-    } finally {
-      setConfirming(false);
-    }
+  function handleConfirmPaid() {
+    if (!pending) return;
+    setSuccess(pending);
+    setPix(null);
   }
 
   function copyPix() {
-    if (!pix?.qr_code) return;
-    navigator.clipboard.writeText(pix.qr_code).then(() => toast.success("Código PIX copiado"));
+    navigator.clipboard.writeText(PIX_KEY).then(() => toast.success("Copiado!"));
   }
 
   function handleClose(v: boolean) {
@@ -369,49 +330,51 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         {showPix && (
           <div className="px-6 py-6 text-center">
             <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              <QrCode className="h-3.5 w-3.5" /> Mercado Pago · PIX
+              <QrCode className="h-3.5 w-3.5" /> PIX · Chave Manual
             </div>
-            {pix!.qr_code_base64 ? (
-              <img
-                src={`data:image/png;base64,${pix!.qr_code_base64}`}
-                alt="QR Code PIX"
-                className="mx-auto mt-4 h-56 w-56 rounded-2xl border border-border bg-white p-2"
-              />
-            ) : (
-              <div className="mx-auto mt-4 flex h-56 w-56 items-center justify-center rounded-2xl border border-dashed border-border text-xs text-muted-foreground">
-                QR Code indisponível
-              </div>
-            )}
-            <p className="mt-4 font-display text-xl text-primary">{formatBRL(pending?.total ?? 0)}</p>
-            {pix!.qr_code && (
-              <div className="mx-auto mt-4 max-w-sm rounded-2xl border border-border bg-secondary/40 p-3 text-left">
+            <p className="mt-4 font-display text-2xl text-primary">{formatBRL(pending?.total ?? 0)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Total a transferir via PIX</p>
+
+            <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-border bg-secondary/40 p-5 text-left">
+              <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  PIX copia e cola
+                  Tipo de chave
                 </p>
-                <p className="mt-1 break-all font-mono text-[11px] text-card-foreground">
-                  {pix!.qr_code.slice(0, 90)}{pix!.qr_code.length > 90 ? "…" : ""}
-                </p>
-                <button
-                  onClick={copyPix}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground"
-                >
-                  <Copy className="h-3 w-3" /> Copiar código
-                </button>
+                <p className="mt-0.5 text-sm font-medium text-card-foreground">E-mail</p>
               </div>
-            )}
+              <div className="mt-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Chave PIX
+                </p>
+                <p className="mt-0.5 break-all font-mono text-sm text-card-foreground">{PIX_KEY}</p>
+              </div>
+              <div className="mt-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Beneficiário
+                </p>
+                <p className="mt-0.5 text-sm text-card-foreground">{PIX_BENEFICIARY}</p>
+              </div>
+              <button
+                onClick={copyPix}
+                className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-2.5 text-xs font-semibold text-primary-foreground hover:brightness-110"
+              >
+                <Copy className="h-3.5 w-3.5" /> Copiar Chave PIX
+              </button>
+            </div>
+
             <button
               onClick={handleConfirmPaid}
-              disabled={confirming}
-              className="mt-5 inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-cherry px-6 py-4 text-base font-semibold text-cherry-foreground shadow-glow hover:brightness-110 disabled:opacity-60"
+              className="mt-5 inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-cherry px-6 py-4 text-base font-semibold text-cherry-foreground shadow-glow hover:brightness-110"
             >
-              {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              Já paguei — verificar
+              <CheckCircle2 className="h-4 w-4" />
+              Já paguei — Avançar para o WhatsApp
             </button>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              Detectamos o pagamento automaticamente assim que cair.
+              Após o pagamento, envie a comanda pelo WhatsApp para confirmarmos seu pedido.
             </p>
           </div>
         )}
+
 
         {showCard && (
           <div className="px-6 py-5">
