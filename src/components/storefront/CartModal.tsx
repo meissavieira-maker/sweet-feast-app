@@ -10,16 +10,25 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
+const DELIVERY_CITIES = [
+  { id: "cachoeira", label: "Cachoeira", fee: 7 },
+  { id: "sao-felix", label: "São Félix", fee: 8 },
+  { id: "capoeirucu", label: "Capoeiruçu", fee: 20 },
+  { id: "muritiba", label: "Muritiba", fee: 20 },
+] as const;
+
 export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { items, setQty, remove, total, count, clear } = useCart();
   const [mode, setMode] = useState<"entrega" | "retirada">("entrega");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [cityId, setCityId] = useState<string>("");
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const deliveryFee = mode === "entrega" ? (total >= 80 ? 0 : 8.9) : 0;
+  const selectedCity = DELIVERY_CITIES.find((c) => c.id === cityId);
+  const deliveryFee = mode === "entrega" ? (selectedCity?.fee ?? 0) : 0;
   const finalTotal = total + deliveryFee;
 
   async function handleCheckout() {
