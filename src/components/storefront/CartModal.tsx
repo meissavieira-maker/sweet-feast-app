@@ -99,23 +99,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const deliveryFee = mode === "entrega" ? (selectedCity?.fee ?? 0) : 0;
   const finalTotal = total + deliveryFee;
 
-  // Auto-poll Mercado Pago to detect PIX approval
-  useEffect(() => {
-    if (!pix || !pending || success) return;
-    let stop = false;
-    const id = setInterval(async () => {
-      try {
-        const r = await checkPixPayment({ data: { payment_id: pix.payment_id, order_id: pending.orderId } });
-        if (!stop && r.status === "approved") {
-          setSuccess(pending);
-          setPix(null);
-        }
-      } catch {
-        /* noop */
-      }
-    }, 5000);
-    return () => { stop = true; clearInterval(id); };
-  }, [pix, pending, success]);
+  // Manual PIX flow — no automatic polling.
 
   // Mount the Mercado Pago Card Brick when entering card stage
   useEffect(() => {
