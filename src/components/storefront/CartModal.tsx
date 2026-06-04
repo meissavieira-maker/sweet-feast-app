@@ -31,11 +31,13 @@ type PaymentMethod = "pix" | "card";
 type SuccessInfo = {
   orderId: string;
   name: string;
+  phone: string;
   mode: "entrega" | "retirada";
   address: string;
   items: CartItem[];
   total: number;
 };
+
 
 type PixInfo = {
   payment_id: string;
