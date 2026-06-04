@@ -22,7 +22,7 @@ export const Route = createFileRoute("/admin")({
 
 function AdminPage() {
   const { loading, session, isAdmin, refresh } = useAdminAuth();
-  const [tab, setTab] = useState<"produtos" | "pedidos">("produtos");
+  const [tab, setTab] = useState<"produtos" | "pedidos" | "config">("produtos");
 
   if (loading) {
     return (
