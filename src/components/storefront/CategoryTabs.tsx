@@ -10,7 +10,7 @@ export function CategoryTabs({
   return (
     <div className="sticky top-0 z-30 -mx-5 sm:mx-0 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="mx-auto max-w-6xl px-5">
-        <div className="flex gap-2 justify-center sm:justify-start overflow-x-auto py-3 no-scrollbar">
+        <div className="flex gap-2 flex-nowrap justify-start overflow-x-auto py-3 no-scrollbar">
           {categories.map((c) => {
             const isActive = c.id === active;
             return (
