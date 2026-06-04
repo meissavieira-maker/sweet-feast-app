@@ -267,27 +267,14 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     }
   }
 
-  async function handleConfirmPaid() {
-    if (!pix || !pending) return;
-    setConfirming(true);
-    try {
-      const r = await checkPixPayment({ data: { payment_id: pix.payment_id, order_id: pending.orderId } });
-      if (r.status === "approved") {
-        setSuccess(pending);
-        setPix(null);
-      } else {
-        toast.message("Pagamento ainda não identificado. Tente novamente em alguns segundos.");
-      }
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível verificar o pagamento");
-    } finally {
-      setConfirming(false);
-    }
+  function handleConfirmPaid() {
+    if (!pending) return;
+    setSuccess(pending);
+    setPix(null);
   }
 
   function copyPix() {
-    if (!pix?.qr_code) return;
-    navigator.clipboard.writeText(pix.qr_code).then(() => toast.success("Código PIX copiado"));
+    navigator.clipboard.writeText(PIX_KEY).then(() => toast.success("Copiado!"));
   }
 
   function handleClose(v: boolean) {
