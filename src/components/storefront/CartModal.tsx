@@ -1,6 +1,6 @@
-import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin } from "lucide-react";
 import { useState } from "react";
-import { formatBRL, useCart } from "@/lib/cart-context";
+import { formatBRL, useCart, type CartItem } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -16,6 +16,18 @@ const DELIVERY_CITIES = [
   { id: "capoeirucu", label: "Capoeiruçu", fee: 20 },
   { id: "muritiba", label: "Muritiba", fee: 20 },
 ] as const;
+
+const PICKUP_ADDRESS = "Rua Rodrigo Brandão, Número 32, Cachoeira - BA";
+const WHATSAPP_PHONE = "5575991074216"; // +55 (75) 99107-4216
+
+type SuccessInfo = {
+  orderId: string;
+  name: string;
+  mode: "entrega" | "retirada";
+  address: string;
+  items: CartItem[];
+  total: number;
+};
 
 export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { items, setQty, remove, total, count, clear } = useCart();
