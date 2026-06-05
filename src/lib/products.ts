@@ -4,9 +4,7 @@ export type Category = {
 };
 
 export const categories: Category[] = [
-  { id: "fatias", label: "Fatias" },
-  { id: "bolos", label: "Caseirinhos" },
-  { id: "docinhos", label: "Pudins" },
+  { id: "fatias", label: "Fatias-Caseirinhos-Pudins" },
 ];
 
 export type Product = {
