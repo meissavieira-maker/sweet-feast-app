@@ -1,8 +1,9 @@
-import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin, Copy, QrCode, CreditCard, Lock } from "lucide-react";
+import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin, Copy, QrCode, CreditCard, Lock, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { formatBRL, useCart, type CartItem } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
 import { createCardPayment, getPublicConfig } from "@/lib/payments.functions";
+import type { Product } from "@/lib/products";
 import {
   Dialog,
   DialogContent,
@@ -82,8 +83,9 @@ function loadMpSdk(): Promise<void> {
 }
 
 export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { items, setQty, remove, total, count, clear } = useCart();
+  const { items, setQty, remove, add, total, count, clear } = useCart();
   const { isOpen: storeOpen } = useStoreStatus();
+  const [bumps, setBumps] = useState<{ pudim: Product | null; caseirinho: Product | null }>({ pudim: null, caseirinho: null });
   const [mode, setMode] = useState<"entrega" | "retirada">("entrega");
   const [method, setMethod] = useState<PaymentMethod>("pix");
   const [name, setName] = useState("");
@@ -199,6 +201,34 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       brickRef.current = null;
     }
   }, [open]);
+  // Fetch order-bump suggestions (one Pudim + one Caseirinho) when modal opens
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, category, name, description, price, image_url, stock, badge")
+        .eq("active", true)
+        .in("category", ["docinhos", "bolos"])
+        .gt("stock", 0);
+      if (cancelled || !data) return;
+      const pudim = data.find((p) => p.category === "docinhos") ?? null;
+      const caseirinho = data.find((p) => p.category === "bolos") ?? null;
+      setBumps({ pudim: pudim as Product | null, caseirinho: caseirinho as Product | null });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  function toggleBump(p: Product | null) {
+    if (!p) return;
+    const inCart = items.some((i) => i.product.id === p.id);
+    if (inCart) remove(p.id);
+    else add(p);
+  }
+
 
   async function handleCheckout() {
     if (!storeOpen) {
@@ -628,6 +658,37 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                   </div>
                 )}
 
+                {(bumps.pudim || bumps.caseirinho) && (
+                  <div className="mt-5 rounded-2xl border-2 border-dashed border-cherry/60 bg-cherry/5 p-3 sm:p-4">
+                    <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-cherry">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Oferta especial só agora
+                    </div>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      Aproveite e adicione ao seu pedido com 1 clique:
+                    </p>
+                    <div className="space-y-2">
+                      {bumps.pudim && (
+                        <BumpRow
+                          product={bumps.pudim}
+                          checked={items.some((i) => i.product.id === bumps.pudim!.id)}
+                          onToggle={() => toggleBump(bumps.pudim)}
+                          label={`Aproveite para levar um ${bumps.pudim.name} por apenas ${formatBRL(bumps.pudim.price)}!`}
+                        />
+                      )}
+                      {bumps.caseirinho && (
+                        <BumpRow
+                          product={bumps.caseirinho}
+                          checked={items.some((i) => i.product.id === bumps.caseirinho!.id)}
+                          onToggle={() => toggleBump(bumps.caseirinho)}
+                          label={`Adicione um ${bumps.caseirinho.name} para o café da tarde por apenas ${formatBRL(bumps.caseirinho.price)}!`}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+
                 <button
                   disabled={submitting || !storeOpen}
                   onClick={handleCheckout}
@@ -644,6 +705,43 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function BumpRow({
+  product,
+  checked,
+  onToggle,
+  label,
+}: {
+  product: Product;
+  checked: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
+  return (
+    <label
+      className={`flex cursor-pointer items-center gap-3 rounded-xl border p-2.5 transition-all ${
+        checked
+          ? "border-cherry bg-cherry/10 shadow-soft"
+          : "border-border bg-card hover:border-cherry/50"
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onToggle}
+        className="h-5 w-5 shrink-0 accent-cherry"
+      />
+      <img
+        src={product.image_url}
+        alt={product.name}
+        className="h-12 w-12 shrink-0 rounded-lg object-cover"
+      />
+      <div className="flex-1 text-xs leading-snug text-card-foreground sm:text-sm">
+        {label}
+      </div>
+    </label>
   );
 }
 
