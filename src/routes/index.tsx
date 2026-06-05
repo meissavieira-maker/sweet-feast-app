@@ -55,14 +55,36 @@ function Store() {
   const visible = useMemo(() => {
     const filtered = products.filter((p) => p.category === activeCat);
     if (activeCat !== "fatias") return filtered;
-    const fatiaKeywords = ["torta", "red velvet"];
-    return filtered.sort((a, b) => {
-      const aIsFatia = fatiaKeywords.some((k) => a.name.toLowerCase().includes(k));
-      const bIsFatia = fatiaKeywords.some((k) => b.name.toLowerCase().includes(k));
-      if (aIsFatia && !bIsFatia) return -1;
-      if (!aIsFatia && bIsFatia) return 1;
-      return 0;
-    });
+
+    const order: string[] = [
+      "torta pudim",
+      "torta matilda",
+      "torta red velvet",
+      "torta chocolate com maracuja",
+      "ninho com geleia de morango",
+      "palha italiana",
+      "tapioca com doce de leite",
+      "olho de sogra",
+      "mousse de limao com creme de coco",
+      "brigadeiro",
+      "dois amores",
+      "ninho",
+      "red velvet",
+      "ovomaltine",
+      "pudim no pote",
+      "tapioca",
+    ];
+
+    const normalize = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+    const rankOf = (name: string) => {
+      const n = normalize(name);
+      const idx = order.indexOf(n);
+      return idx === -1 ? Infinity : idx;
+    };
+
+    return [...filtered].sort((a, b) => rankOf(a.name) - rankOf(b.name));
   }, [products, activeCat]);
   const activeLabel = categories.find((c) => c.id === activeCat)?.label;
 
