@@ -52,7 +52,18 @@ function Store() {
     },
   });
 
-  const visible = useMemo(() => products.filter((p) => p.category === activeCat), [products, activeCat]);
+  const visible = useMemo(() => {
+    const filtered = products.filter((p) => p.category === activeCat);
+    if (activeCat !== "fatias") return filtered;
+    const fatiaKeywords = ["torta", "red velvet"];
+    return filtered.sort((a, b) => {
+      const aIsFatia = fatiaKeywords.some((k) => a.name.toLowerCase().includes(k));
+      const bIsFatia = fatiaKeywords.some((k) => b.name.toLowerCase().includes(k));
+      if (aIsFatia && !bIsFatia) return -1;
+      if (!aIsFatia && bIsFatia) return 1;
+      return 0;
+    });
+  }, [products, activeCat]);
   const activeLabel = categories.find((c) => c.id === activeCat)?.label;
 
   return (
