@@ -331,6 +331,8 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           </DialogDescription>
         </div>
 
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+
         {showPix && (
           <div className="px-6 py-6 text-center">
             <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
