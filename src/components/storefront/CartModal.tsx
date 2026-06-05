@@ -708,6 +708,43 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   );
 }
 
+function BumpRow({
+  product,
+  checked,
+  onToggle,
+  label,
+}: {
+  product: Product;
+  checked: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
+  return (
+    <label
+      className={`flex cursor-pointer items-center gap-3 rounded-xl border p-2.5 transition-all ${
+        checked
+          ? "border-cherry bg-cherry/10 shadow-soft"
+          : "border-border bg-card hover:border-cherry/50"
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onToggle}
+        className="h-5 w-5 shrink-0 accent-cherry"
+      />
+      <img
+        src={product.image_url}
+        alt={product.name}
+        className="h-12 w-12 shrink-0 rounded-lg object-cover"
+      />
+      <div className="flex-1 text-xs leading-snug text-card-foreground sm:text-sm">
+        {label}
+      </div>
+    </label>
+  );
+}
+
 function ModeButton({
   active,
   onClick,
