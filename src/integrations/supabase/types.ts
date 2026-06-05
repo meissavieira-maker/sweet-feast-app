@@ -91,6 +91,7 @@ export type Database = {
           notes: string | null
           payment_status: string
           status: Database["public"]["Enums"]["order_status"]
+          stock_deducted: boolean
           subtotal: number
           total: number
           updated_at: string
@@ -108,6 +109,7 @@ export type Database = {
           notes?: string | null
           payment_status?: string
           status?: Database["public"]["Enums"]["order_status"]
+          stock_deducted?: boolean
           subtotal: number
           total: number
           updated_at?: string
@@ -125,6 +127,7 @@ export type Database = {
           notes?: string | null
           payment_status?: string
           status?: Database["public"]["Enums"]["order_status"]
+          stock_deducted?: boolean
           subtotal?: number
           total?: number
           updated_at?: string
