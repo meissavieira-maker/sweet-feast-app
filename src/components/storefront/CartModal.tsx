@@ -201,6 +201,34 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       brickRef.current = null;
     }
   }, [open]);
+  // Fetch order-bump suggestions (one Pudim + one Caseirinho) when modal opens
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, category, name, description, price, image_url, stock, badge")
+        .eq("active", true)
+        .in("category", ["docinhos", "bolos"])
+        .gt("stock", 0);
+      if (cancelled || !data) return;
+      const pudim = data.find((p) => p.category === "docinhos") ?? null;
+      const caseirinho = data.find((p) => p.category === "bolos") ?? null;
+      setBumps({ pudim: pudim as Product | null, caseirinho: caseirinho as Product | null });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  function toggleBump(p: Product | null) {
+    if (!p) return;
+    const inCart = items.some((i) => i.product.id === p.id);
+    if (inCart) remove(p.id);
+    else add(p);
+  }
+
 
   async function handleCheckout() {
     if (!storeOpen) {
