@@ -511,7 +511,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
             </div>
 
             {items.length > 0 && (
-              <div className="border-t border-border bg-secondary/40 px-6 py-5">
+              <div className="border-t border-border bg-secondary/40 px-5 py-4 sm:px-6 sm:py-5">
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                   Como você quer receber?
                 </p>
