@@ -1,8 +1,9 @@
-import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin, Copy, QrCode, CreditCard, Lock } from "lucide-react";
+import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin, Copy, QrCode, CreditCard, Lock, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { formatBRL, useCart, type CartItem } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
 import { createCardPayment, getPublicConfig } from "@/lib/payments.functions";
+import type { Product } from "@/lib/products";
 import {
   Dialog,
   DialogContent,
