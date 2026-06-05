@@ -453,7 +453,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
         {showCart && (
           <>
-            <div className="max-h-[36vh] overflow-y-auto px-6 py-5">
+            <div className="px-5 py-4 sm:px-6 sm:py-5">
               {items.length === 0 ? (
                 <p className="py-10 text-center text-sm text-muted-foreground">
                   Seu carrinho está vazio. Adicione uma delícia! 🍰
