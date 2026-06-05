@@ -658,6 +658,37 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                   </div>
                 )}
 
+                {(bumps.pudim || bumps.caseirinho) && (
+                  <div className="mt-5 rounded-2xl border-2 border-dashed border-cherry/60 bg-cherry/5 p-3 sm:p-4">
+                    <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-cherry">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Oferta especial só agora
+                    </div>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      Aproveite e adicione ao seu pedido com 1 clique:
+                    </p>
+                    <div className="space-y-2">
+                      {bumps.pudim && (
+                        <BumpRow
+                          product={bumps.pudim}
+                          checked={items.some((i) => i.product.id === bumps.pudim!.id)}
+                          onToggle={() => toggleBump(bumps.pudim)}
+                          label={`Aproveite para levar um ${bumps.pudim.name} por apenas ${formatBRL(bumps.pudim.price)}!`}
+                        />
+                      )}
+                      {bumps.caseirinho && (
+                        <BumpRow
+                          product={bumps.caseirinho}
+                          checked={items.some((i) => i.product.id === bumps.caseirinho!.id)}
+                          onToggle={() => toggleBump(bumps.caseirinho)}
+                          label={`Adicione um ${bumps.caseirinho.name} para o café da tarde por apenas ${formatBRL(bumps.caseirinho.price)}!`}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+
                 <button
                   disabled={submitting || !storeOpen}
                   onClick={handleCheckout}
