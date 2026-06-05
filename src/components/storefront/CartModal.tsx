@@ -309,9 +309,9 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg gap-0 overflow-hidden rounded-3xl border-border bg-card p-0">
-        <div className="border-b border-border px-6 py-4">
-          <DialogTitle className="font-display text-xl text-card-foreground">
+      <DialogContent className="flex h-[100dvh] max-h-[100dvh] w-full max-w-lg flex-col gap-0 overflow-hidden rounded-none border-border bg-card p-0 sm:h-auto sm:max-h-[90vh] sm:rounded-3xl">
+        <div className="shrink-0 border-b border-border px-5 py-3 sm:px-6 sm:py-4">
+          <DialogTitle className="font-display text-lg sm:text-xl text-card-foreground">
             {success
               ? "Pedido confirmado"
               : showPix
