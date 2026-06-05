@@ -210,11 +210,10 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         .from("products")
         .select("id, category, name, description, price, image_url, stock, badge")
         .eq("active", true)
-        .in("category", ["docinhos", "bolos"])
         .gt("stock", 0);
       if (cancelled || !data) return;
-      const pudim = data.find((p) => p.category === "docinhos") ?? null;
-      const caseirinho = data.find((p) => p.category === "bolos") ?? null;
+      const pudim = data.find((p) => /pudim|pudins/i.test(p.name)) ?? null;
+      const caseirinho = data.find((p) => /caseirinho/i.test(p.name)) ?? null;
       setBumps({ pudim: pudim as Product | null, caseirinho: caseirinho as Product | null });
     })();
     return () => {

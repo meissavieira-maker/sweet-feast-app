@@ -1,0 +1,1 @@
+UPDATE public.products SET category = 'fatias' WHERE category IN ('bolos','docinhos');
