@@ -641,6 +641,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
             )}
           </>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );
