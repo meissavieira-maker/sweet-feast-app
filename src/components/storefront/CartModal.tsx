@@ -83,8 +83,9 @@ function loadMpSdk(): Promise<void> {
 }
 
 export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { items, setQty, remove, total, count, clear } = useCart();
+  const { items, setQty, remove, add, total, count, clear } = useCart();
   const { isOpen: storeOpen } = useStoreStatus();
+  const [bumps, setBumps] = useState<{ pudim: Product | null; caseirinho: Product | null }>({ pudim: null, caseirinho: null });
   const [mode, setMode] = useState<"entrega" | "retirada">("entrega");
   const [method, setMethod] = useState<PaymentMethod>("pix");
   const [name, setName] = useState("");
