@@ -63,6 +63,7 @@ function Store() {
       "torta chocolate com maracuja",
       "ninho com geleia de morango",
       "palha italiana",
+      "torta crocante",
       "tapioca com doce de leite",
       "olho de sogra",
       "mousse de limao com creme de coco",
