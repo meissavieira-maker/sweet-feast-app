@@ -53,7 +53,7 @@ export function StoreHeader() {
             }`}
           >
             <span className={`h-2 w-2 rounded-full ${isOpen ? "bg-emerald-400" : "bg-rose-400"} animate-pulse`} />
-            {isOpen ? "🟢 Aberto agora" : "🔴 Pedidos Pausados"}
+            {isOpen ? "🟢 Aberto agora" : "🔴 Fechado"}
           </span>
         </div>
 
