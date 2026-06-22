@@ -26,6 +26,7 @@ export function AdminProducts() {
       const { data, error } = await supabase
         .from("products")
         .select("id,name,description,price,category,image_url,stock,badge")
+        .eq("active", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Product[];
@@ -34,7 +35,10 @@ export function AdminProducts() {
 
   const del = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("products").delete().eq("id", id);
+      const { error } = await supabase
+        .from("products")
+        .update({ active: false })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -44,6 +48,7 @@ export function AdminProducts() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   return (
     <div>
