@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { categories, type Product } from "@/lib/products";
+import { categories, normalizeProduct, normalizeProducts, type Product } from "@/lib/products";
 import { formatBRL } from "@/lib/cart-context";
 import { toast } from "sonner";
 import {
@@ -19,16 +19,24 @@ type Editing = Partial<Product> & { id?: string };
 export function AdminProducts() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Editing | null>(null);
+  const [productWarning, setProductWarning] = useState<string | null>(null);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["admin-products"],
     queryFn: async (): Promise<Product[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id,name,description,price,category,image_url,stock,badge")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as Product[];
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id,name,description,price,category,image_url,stock,badge")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        setProductWarning(null);
+        return normalizeProducts(data);
+      } catch (error) {
+        console.warn("Falha ao carregar produtos no admin", error);
+        setProductWarning("Não foi possível carregar os produtos agora. A lista foi protegida para evitar queda da página.");
+        return [];
+      }
     },
   });
 
@@ -62,6 +70,12 @@ export function AdminProducts() {
         </button>
       </div>
 
+      {productWarning && (
+        <div className="mb-5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {productWarning}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-12 text-muted-foreground">
           <Loader2 className="h-6 w-6 animate-spin" />
@@ -83,48 +97,54 @@ export function AdminProducts() {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
-                <tr key={p.id} className="border-t border-border">
+              {products.map((p) => {
+                const product = normalizeProduct(p);
+                if (!product) return null;
+                const categoryLabel = categories.find((c) => c.id === product?.category)?.label ?? product?.category ?? "";
+                const stock = product?.stock ?? 0;
+
+                return (
+                <tr key={product?.id ?? "produto"} className="border-t border-border">
                   <td className="p-3">
                     <div className="flex items-center gap-3">
-                      {p.image_url ? (
-                        <img src={p.image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                      {product?.image_url ? (
+                        <img src={product.image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
                       ) : (
                         <div className="h-10 w-10 rounded-lg bg-muted" />
                       )}
                       <div>
-                        <div className="font-medium text-card-foreground">{p.name}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-1">{p.description}</div>
+                        <div className="font-medium text-card-foreground">{product?.name || "Produto sem nome"}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-1">{product?.description || ""}</div>
                       </div>
                     </div>
                   </td>
                   <td className="p-3 capitalize text-muted-foreground">
-                    {categories.find((c) => c.id === p.category)?.label ?? p.category}
+                    {categoryLabel}
                   </td>
-                  <td className="p-3">{formatBRL(p.price)}</td>
+                  <td className="p-3">{formatBRL(product?.price ?? 0)}</td>
                   <td className="p-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${
-                        p.stock <= 0
+                        stock <= 0
                           ? "bg-destructive/10 text-destructive"
-                          : p.stock < 5
+                          : stock < 5
                             ? "bg-cherry/15 text-cherry"
                             : "bg-primary/10 text-primary"
                       }`}
                     >
-                      {p.stock} un.
+                      {stock} un.
                     </span>
                   </td>
                   <td className="p-3 text-right">
                     <button
-                      onClick={() => setEditing(p)}
+                      onClick={() => setEditing(product)}
                       className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-muted-foreground hover:text-primary"
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm(`Apagar "${p.name}"?`)) del.mutate(p.id);
+                        if (product?.id && confirm(`Apagar "${product?.name || "produto"}"?`)) del.mutate(product.id);
                       }}
                       className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-muted-foreground hover:text-destructive"
                     >
@@ -132,7 +152,8 @@ export function AdminProducts() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>
