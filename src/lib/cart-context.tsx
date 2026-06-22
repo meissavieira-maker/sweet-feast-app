@@ -19,24 +19,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
   const value = useMemo<CartCtx>(() => {
-    const safeItems = items.filter((i) => i?.product?.id);
-    const count = safeItems.reduce((s, i) => s + (i?.qty ?? 0), 0);
-    const total = safeItems.reduce((s, i) => s + (i?.qty ?? 0) * (i?.product?.price ?? 0), 0);
+    const count = items.reduce((s, i) => s + i.qty, 0);
+    const total = items.reduce((s, i) => s + i.qty * i.product.price, 0);
     return {
-      items: safeItems,
+      items,
       count,
       total,
       add: (p) =>
         setItems((prev) => {
-          if (!p?.id) return prev;
-          const found = prev.find((i) => i?.product?.id === p.id);
-          if (found) return prev.map((i) => (i?.product?.id === p.id ? { ...i, qty: (i?.qty ?? 0) + 1 } : i));
+          const found = prev.find((i) => i.product.id === p.id);
+          if (found) return prev.map((i) => (i.product.id === p.id ? { ...i, qty: i.qty + 1 } : i));
           return [...prev, { product: p, qty: 1 }];
         }),
-      remove: (id) => setItems((prev) => prev.filter((i) => i?.product?.id !== id)),
+      remove: (id) => setItems((prev) => prev.filter((i) => i.product.id !== id)),
       setQty: (id, qty) =>
         setItems((prev) =>
-          qty <= 0 ? prev.filter((i) => i?.product?.id !== id) : prev.map((i) => (i?.product?.id === id ? { ...i, qty } : i)),
+          qty <= 0 ? prev.filter((i) => i.product.id !== id) : prev.map((i) => (i.product.id === id ? { ...i, qty } : i)),
         ),
       clear: () => setItems([]),
     };
@@ -52,4 +50,4 @@ export function useCart() {
 }
 
 export const formatBRL = (v: number) =>
-  (Number.isFinite(Number(v)) ? Number(v) : 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

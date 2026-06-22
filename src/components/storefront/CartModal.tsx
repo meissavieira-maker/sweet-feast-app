@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatBRL, useCart, type CartItem } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
 import { createCardPayment, getPublicConfig } from "@/lib/payments.functions";
-import { normalizeProducts, type Product } from "@/lib/products";
+import type { Product } from "@/lib/products";
 import {
   Dialog,
   DialogContent,
@@ -86,7 +86,6 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const { items, setQty, remove, add, total, count, clear } = useCart();
   const { isOpen: storeOpen } = useStoreStatus();
   const [bumps, setBumps] = useState<{ pudim: Product | null; caseirinho: Product | null }>({ pudim: null, caseirinho: null });
-  const [bumpWarning, setBumpWarning] = useState<string | null>(null);
   const [mode, setMode] = useState<"entrega" | "retirada">("entrega");
   const [method, setMethod] = useState<PaymentMethod>("pix");
   const [name, setName] = useState("");
@@ -207,25 +206,15 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     if (!open) return;
     let cancelled = false;
     (async () => {
-      try {
-        const { data, error } = await supabase
-          .from("products")
-          .select("id, category, name, description, price, image_url, stock, badge")
-          .gt("stock", 0);
-        if (error) throw error;
-        if (cancelled) return;
-        const products = normalizeProducts(data);
-        const pudim = products.find((p) => /pudim|pudins/i.test(p?.name ?? "")) ?? null;
-        const caseirinho = products.find((p) => /caseirinho/i.test(p?.name ?? "")) ?? null;
-        setBumps({ pudim, caseirinho });
-        setBumpWarning(null);
-      } catch (error) {
-        console.warn("Falha ao carregar ofertas do carrinho", error);
-        if (!cancelled) {
-          setBumps({ pudim: null, caseirinho: null });
-          setBumpWarning("Não foi possível carregar ofertas adicionais agora.");
-        }
-      }
+      const { data } = await supabase
+        .from("products")
+        .select("id, category, name, description, price, image_url, stock, badge")
+        .eq("active", true)
+        .gt("stock", 0);
+      if (cancelled || !data) return;
+      const pudim = data.find((p) => /pudim|pudins/i.test(p.name)) ?? null;
+      const caseirinho = data.find((p) => /caseirinho/i.test(p.name)) ?? null;
+      setBumps({ pudim: pudim as Product | null, caseirinho: caseirinho as Product | null });
     })();
     return () => {
       cancelled = true;
@@ -233,8 +222,8 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   }, [open]);
 
   function toggleBump(p: Product | null) {
-    if (!p?.id) return;
-    const inCart = items.some((i) => i?.product?.id === p.id);
+    if (!p) return;
+    const inCart = items.some((i) => i.product.id === p.id);
     if (inCart) remove(p.id);
     else add(p);
   }
@@ -260,42 +249,39 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       }
     }
     setSubmitting(true);
+    const fullAddress =
+      mode === "entrega" && selectedCity
+        ? `${address.trim()} — ${selectedCity.label}`
+        : PICKUP_ADDRESS;
+    const snapshotItems = items.map((i) => ({ ...i }));
+    const snapshotTotal = finalTotal;
+    const { data, error } = await supabase.rpc("place_order", {
+      _customer_name: name.trim(),
+      _customer_phone: phone.trim(),
+      _mode: mode,
+      _address: fullAddress,
+      _delivery_fee: deliveryFee,
+      _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
+    });
+
+    if (error) {
+      setSubmitting(false);
+      toast.error(error.message || "Não foi possível concluir o pedido");
+      return;
+    }
+    const orderId = typeof data === "string" ? data : "";
+    const pendingInfo: SuccessInfo = {
+      orderId,
+      name: name.trim(),
+      phone: phone.trim(),
+      mode,
+      address: fullAddress,
+      items: snapshotItems,
+      total: snapshotTotal,
+    };
+
+
     try {
-      const fullAddress =
-        mode === "entrega" && selectedCity
-          ? `${address.trim()} — ${selectedCity.label}`
-          : PICKUP_ADDRESS;
-      const snapshotItems = items.filter((i) => i?.product?.id).map((i) => ({ ...i }));
-      const orderItems = snapshotItems.map((i) => ({ product_id: i.product.id, quantity: i.qty }));
-      if (orderItems.length === 0) {
-        toast.error("Seu carrinho está vazio");
-        return;
-      }
-      const snapshotTotal = finalTotal;
-      const { data, error } = await supabase.rpc("place_order", {
-        _customer_name: name.trim(),
-        _customer_phone: phone.trim(),
-        _mode: mode,
-        _address: fullAddress,
-        _delivery_fee: deliveryFee,
-        _items: orderItems,
-      });
-
-      if (error) {
-        toast.error(error.message || "Não foi possível concluir o pedido");
-        return;
-      }
-      const orderId = typeof data === "string" ? data : "";
-      const pendingInfo: SuccessInfo = {
-        orderId,
-        name: name.trim(),
-        phone: phone.trim(),
-        mode,
-        address: fullAddress,
-        items: snapshotItems,
-        total: snapshotTotal,
-      };
-
       if (method === "pix") {
         // Manual PIX: no Mercado Pago API call — show static recipient key.
         setPending(pendingInfo);
@@ -309,7 +295,6 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         clear();
       }
     } catch (e: unknown) {
-      console.warn("Falha ao finalizar pedido", e);
       const msg = e instanceof Error ? e.message : "Falha ao iniciar pagamento";
       toast.error(msg);
     } finally {
@@ -460,7 +445,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               Obrigado, {success.name || "cliente"}!
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pedido <span className="font-mono text-foreground">#{(success?.orderId ?? "").slice(0, 8).toUpperCase()}</span> registrado.
+              Pedido <span className="font-mono text-foreground">#{success.orderId.slice(0, 8).toUpperCase()}</span> registrado.
             </p>
 
             {success.mode === "retirada" && (
@@ -504,43 +489,31 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                 </p>
               ) : (
                 <ul className="space-y-4">
-                  {items.map(({ product, qty }) => {
-                    const productId = product?.id ?? "";
-                    const productName = product?.name || "Produto sem nome";
-                    const imageUrl = product?.image_url || "";
-                    const price = product?.price ?? 0;
-
-                    return (
-                    <li key={productId || productName} className="flex gap-3">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={productName}
-                          className="h-16 w-16 rounded-xl object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-muted text-[10px] text-muted-foreground">
-                          sem imagem
-                        </div>
-                      )}
+                  {items.map(({ product, qty }) => (
+                    <li key={product.id} className="flex gap-3">
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="h-16 w-16 rounded-xl object-cover"
+                      />
                       <div className="flex flex-1 flex-col">
                         <div className="flex justify-between gap-2">
                           <span className="text-sm font-medium leading-tight text-card-foreground">
-                            {productName}
+                            {product.name}
                           </span>
                           <button
-                            onClick={() => productId && remove(productId)}
+                            onClick={() => remove(product.id)}
                             className="text-muted-foreground hover:text-destructive"
                             aria-label="Remover"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
-                        <span className="mt-1 text-xs text-muted-foreground">{formatBRL(price)}</span>
+                        <span className="mt-1 text-xs text-muted-foreground">{formatBRL(product.price)}</span>
                         <div className="mt-2 flex items-center justify-between">
                           <div className="inline-flex items-center rounded-full bg-secondary">
                             <button
-                              onClick={() => productId && setQty(productId, qty - 1)}
+                              onClick={() => setQty(product.id, qty - 1)}
                               className="p-2 text-secondary-foreground hover:text-primary"
                               aria-label="Diminuir"
                             >
@@ -548,7 +521,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                             </button>
                             <span className="w-6 text-center text-sm font-medium">{qty}</span>
                             <button
-                              onClick={() => productId && setQty(productId, qty + 1)}
+                              onClick={() => setQty(product.id, qty + 1)}
                               className="p-2 text-secondary-foreground hover:text-primary"
                               aria-label="Aumentar"
                             >
@@ -556,13 +529,12 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                             </button>
                           </div>
                           <span className="font-display text-base text-primary">
-                            {formatBRL(price * qty)}
+                            {formatBRL(product.price * qty)}
                           </span>
                         </div>
                       </div>
                     </li>
-                  );
-                  })}
+                  ))}
                 </ul>
               )}
             </div>
@@ -685,13 +657,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                   </div>
                 )}
 
-                {bumpWarning && (
-                  <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
-                    {bumpWarning}
-                  </p>
-                )}
-
-                {(bumps?.pudim || bumps?.caseirinho) && (
+                {(bumps.pudim || bumps.caseirinho) && (
                   <div className="mt-5 rounded-2xl border-2 border-dashed border-cherry/60 bg-cherry/5 p-3 sm:p-4">
                     <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-cherry">
                       <Sparkles className="h-3.5 w-3.5" />
@@ -701,20 +667,20 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                       Aproveite e adicione ao seu pedido com 1 clique:
                     </p>
                     <div className="space-y-2">
-                      {bumps?.pudim && (
+                      {bumps.pudim && (
                         <BumpRow
                           product={bumps.pudim}
-                          checked={items.some((i) => i?.product?.id === bumps?.pudim?.id)}
+                          checked={items.some((i) => i.product.id === bumps.pudim!.id)}
                           onToggle={() => toggleBump(bumps.pudim)}
-                          label={`Aproveite para levar um ${bumps.pudim?.name || "produto"} por apenas ${formatBRL(bumps.pudim?.price ?? 0)}!`}
+                          label={`Aproveite para levar um ${bumps.pudim.name} por apenas ${formatBRL(bumps.pudim.price)}!`}
                         />
                       )}
-                      {bumps?.caseirinho && (
+                      {bumps.caseirinho && (
                         <BumpRow
                           product={bumps.caseirinho}
-                          checked={items.some((i) => i?.product?.id === bumps?.caseirinho?.id)}
+                          checked={items.some((i) => i.product.id === bumps.caseirinho!.id)}
                           onToggle={() => toggleBump(bumps.caseirinho)}
-                          label={`Adicione um ${bumps.caseirinho?.name || "produto"} para o café da tarde por apenas ${formatBRL(bumps.caseirinho?.price ?? 0)}!`}
+                          label={`Adicione um ${bumps.caseirinho.name} para o café da tarde por apenas ${formatBRL(bumps.caseirinho.price)}!`}
                         />
                       )}
                     </div>
@@ -752,9 +718,6 @@ function BumpRow({
   onToggle: () => void;
   label: string;
 }) {
-  const name = product?.name || "Produto sem nome";
-  const imageUrl = product?.image_url || "";
-
   return (
     <label
       className={`flex cursor-pointer items-center gap-3 rounded-xl border p-2.5 transition-all ${
@@ -769,17 +732,11 @@ function BumpRow({
         onChange={onToggle}
         className="h-5 w-5 shrink-0 accent-cherry"
       />
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt={name}
-          className="h-12 w-12 shrink-0 rounded-lg object-cover"
-        />
-      ) : (
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-[9px] text-muted-foreground">
-          sem imagem
-        </div>
-      )}
+      <img
+        src={product.image_url}
+        alt={product.name}
+        className="h-12 w-12 shrink-0 rounded-lg object-cover"
+      />
       <div className="flex-1 text-xs leading-snug text-card-foreground sm:text-sm">
         {label}
       </div>
@@ -821,25 +778,25 @@ function ModeButton({
 }
 
 function buildWhatsAppMessage(s: SuccessInfo) {
-  const shortId = s?.orderId ? s.orderId.slice(0, 8).toUpperCase() : "—";
-  const modoLabel = s?.mode === "entrega" ? "Entrega (Motoboy)" : "Retirada no Local";
-  const endereco = s?.mode === "entrega" ? s?.address || "—" : PICKUP_ADDRESS;
-  const itensTxt = (s?.items ?? [])
-    .map((i) => `🍰 ${i?.qty ?? 0}x ${i?.product?.name || "Produto"} — ${formatBRL((i?.product?.price ?? 0) * (i?.qty ?? 0))}`)
+  const shortId = s.orderId ? s.orderId.slice(0, 8).toUpperCase() : "—";
+  const modoLabel = s.mode === "entrega" ? "Entrega (Motoboy)" : "Retirada no Local";
+  const endereco = s.mode === "entrega" ? s.address : PICKUP_ADDRESS;
+  const itensTxt = s.items
+    .map((i) => `🍰 ${i.qty}x ${i.product.name} — ${formatBRL(i.product.price * i.qty)}`)
     .join("\n");
   return [
     `🍰 *1º Festival de Fatias — Meissa Vieira* 🍰`,
     `-----------------------------------------`,
     `🆔 *Pedido:* #${shortId}`,
-    `👤 *Cliente:* ${s?.name || "cliente"}`,
-    `📞 *WhatsApp:* ${s?.phone || "—"}`,
+    `👤 *Cliente:* ${s.name}`,
+    `📞 *WhatsApp:* ${s.phone || "—"}`,
     `🛵 *Forma de Envio:* ${modoLabel}`,
     `📍 *Endereço:* ${endereco}`,
     ``,
     `🛒 *Fatias Reservadas:*`,
     itensTxt,
     ``,
-    `💰 *Total Geral:* ${formatBRL(s?.total ?? 0)}`,
+    `💰 *Total Geral:* ${formatBRL(s.total)}`,
     `-----------------------------------------`,
     `👉 *Lembrete:* Seus produtos estão reservados! Os envios e retiradas começam neste Domingo a partir das 14h.`,
   ].join("\n");
