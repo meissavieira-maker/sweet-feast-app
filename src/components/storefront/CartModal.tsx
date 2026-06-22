@@ -234,8 +234,8 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   }, [open]);
 
   function toggleBump(p: Product | null) {
-    if (!p) return;
-    const inCart = items.some((i) => i.product.id === p.id);
+    if (!p?.id) return;
+    const inCart = items.some((i) => i?.product?.id === p.id);
     if (inCart) remove(p.id);
     else add(p);
   }
@@ -461,7 +461,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               Obrigado, {success.name || "cliente"}!
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pedido <span className="font-mono text-foreground">#{success.orderId.slice(0, 8).toUpperCase()}</span> registrado.
+              Pedido <span className="font-mono text-foreground">#{(success?.orderId ?? "").slice(0, 8).toUpperCase()}</span> registrado.
             </p>
 
             {success.mode === "retirada" && (
@@ -753,6 +753,9 @@ function BumpRow({
   onToggle: () => void;
   label: string;
 }) {
+  const name = product?.name || "Produto sem nome";
+  const imageUrl = product?.image_url || "";
+
   return (
     <label
       className={`flex cursor-pointer items-center gap-3 rounded-xl border p-2.5 transition-all ${
@@ -767,11 +770,17 @@ function BumpRow({
         onChange={onToggle}
         className="h-5 w-5 shrink-0 accent-cherry"
       />
-      <img
-        src={product.image_url}
-        alt={product.name}
-        className="h-12 w-12 shrink-0 rounded-lg object-cover"
-      />
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={name}
+          className="h-12 w-12 shrink-0 rounded-lg object-cover"
+        />
+      ) : (
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-[9px] text-muted-foreground">
+          sem imagem
+        </div>
+      )}
       <div className="flex-1 text-xs leading-snug text-card-foreground sm:text-sm">
         {label}
       </div>
@@ -813,25 +822,25 @@ function ModeButton({
 }
 
 function buildWhatsAppMessage(s: SuccessInfo) {
-  const shortId = s.orderId ? s.orderId.slice(0, 8).toUpperCase() : "—";
-  const modoLabel = s.mode === "entrega" ? "Entrega (Motoboy)" : "Retirada no Local";
-  const endereco = s.mode === "entrega" ? s.address : PICKUP_ADDRESS;
-  const itensTxt = s.items
-    .map((i) => `🍰 ${i.qty}x ${i.product.name} — ${formatBRL(i.product.price * i.qty)}`)
+  const shortId = s?.orderId ? s.orderId.slice(0, 8).toUpperCase() : "—";
+  const modoLabel = s?.mode === "entrega" ? "Entrega (Motoboy)" : "Retirada no Local";
+  const endereco = s?.mode === "entrega" ? s?.address || "—" : PICKUP_ADDRESS;
+  const itensTxt = (s?.items ?? [])
+    .map((i) => `🍰 ${i?.qty ?? 0}x ${i?.product?.name || "Produto"} — ${formatBRL((i?.product?.price ?? 0) * (i?.qty ?? 0))}`)
     .join("\n");
   return [
     `🍰 *1º Festival de Fatias — Meissa Vieira* 🍰`,
     `-----------------------------------------`,
     `🆔 *Pedido:* #${shortId}`,
-    `👤 *Cliente:* ${s.name}`,
-    `📞 *WhatsApp:* ${s.phone || "—"}`,
+    `👤 *Cliente:* ${s?.name || "cliente"}`,
+    `📞 *WhatsApp:* ${s?.phone || "—"}`,
     `🛵 *Forma de Envio:* ${modoLabel}`,
     `📍 *Endereço:* ${endereco}`,
     ``,
     `🛒 *Fatias Reservadas:*`,
     itensTxt,
     ``,
-    `💰 *Total Geral:* ${formatBRL(s.total)}`,
+    `💰 *Total Geral:* ${formatBRL(s?.total ?? 0)}`,
     `-----------------------------------------`,
     `👉 *Lembrete:* Seus produtos estão reservados! Os envios e retiradas começam neste Domingo a partir das 14h.`,
   ].join("\n");
