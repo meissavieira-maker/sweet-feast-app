@@ -14,7 +14,7 @@ import {
 
 type Editing = Partial<Product> & { id?: string };
 
-const SIGNED_TTL = 60 * 60 * 24 * 365 * 5; // 5 anos
+
 
 export function AdminProducts() {
   const qc = useQueryClient();
@@ -179,11 +179,10 @@ function ProductDialog({
         .from("product-images")
         .upload(path, file, { cacheControl: "31536000", upsert: false });
       if (upErr) throw upErr;
-      const { data: signed, error: sErr } = await supabase.storage
+      const { data: pub } = supabase.storage
         .from("product-images")
-        .createSignedUrl(path, SIGNED_TTL);
-      if (sErr) throw sErr;
-      set("image_url", signed.signedUrl);
+        .getPublicUrl(path);
+      set("image_url", pub.publicUrl);
       toast.success("Imagem enviada");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha no upload");
