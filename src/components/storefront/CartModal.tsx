@@ -686,7 +686,13 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                   </div>
                 )}
 
-                {(bumps.pudim || bumps.caseirinho) && (
+                {bumpWarning && (
+                  <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                    {bumpWarning}
+                  </p>
+                )}
+
+                {(bumps?.pudim || bumps?.caseirinho) && (
                   <div className="mt-5 rounded-2xl border-2 border-dashed border-cherry/60 bg-cherry/5 p-3 sm:p-4">
                     <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-cherry">
                       <Sparkles className="h-3.5 w-3.5" />
@@ -696,20 +702,20 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                       Aproveite e adicione ao seu pedido com 1 clique:
                     </p>
                     <div className="space-y-2">
-                      {bumps.pudim && (
+                      {bumps?.pudim && (
                         <BumpRow
                           product={bumps.pudim}
-                          checked={items.some((i) => i.product.id === bumps.pudim!.id)}
+                          checked={items.some((i) => i?.product?.id === bumps?.pudim?.id)}
                           onToggle={() => toggleBump(bumps.pudim)}
-                          label={`Aproveite para levar um ${bumps.pudim.name} por apenas ${formatBRL(bumps.pudim.price)}!`}
+                          label={`Aproveite para levar um ${bumps.pudim?.name || "produto"} por apenas ${formatBRL(bumps.pudim?.price ?? 0)}!`}
                         />
                       )}
-                      {bumps.caseirinho && (
+                      {bumps?.caseirinho && (
                         <BumpRow
                           product={bumps.caseirinho}
-                          checked={items.some((i) => i.product.id === bumps.caseirinho!.id)}
+                          checked={items.some((i) => i?.product?.id === bumps?.caseirinho?.id)}
                           onToggle={() => toggleBump(bumps.caseirinho)}
-                          label={`Adicione um ${bumps.caseirinho.name} para o café da tarde por apenas ${formatBRL(bumps.caseirinho.price)}!`}
+                          label={`Adicione um ${bumps.caseirinho?.name || "produto"} para o café da tarde por apenas ${formatBRL(bumps.caseirinho?.price ?? 0)}!`}
                         />
                       )}
                     </div>
