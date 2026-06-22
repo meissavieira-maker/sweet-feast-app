@@ -47,7 +47,6 @@ function Store() {
         const { data, error } = await supabase
           .from("products")
           .select("id,name,description,price,category,image_url,stock,badge")
-          .eq("active", true)
           .order("created_at", { ascending: false });
         if (error) throw error;
         setProductWarning(null);
