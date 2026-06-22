@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatBRL, useCart, type CartItem } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
 import { createCardPayment, getPublicConfig } from "@/lib/payments.functions";
-import type { Product } from "@/lib/products";
+import { normalizeProducts, type Product } from "@/lib/products";
 import {
   Dialog,
   DialogContent,
@@ -86,6 +86,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const { items, setQty, remove, add, total, count, clear } = useCart();
   const { isOpen: storeOpen } = useStoreStatus();
   const [bumps, setBumps] = useState<{ pudim: Product | null; caseirinho: Product | null }>({ pudim: null, caseirinho: null });
+  const [bumpWarning, setBumpWarning] = useState<string | null>(null);
   const [mode, setMode] = useState<"entrega" | "retirada">("entrega");
   const [method, setMethod] = useState<PaymentMethod>("pix");
   const [name, setName] = useState("");
@@ -206,15 +207,26 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     if (!open) return;
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("id, category, name, description, price, image_url, stock, badge")
-        .eq("active", true)
-        .gt("stock", 0);
-      if (cancelled || !data) return;
-      const pudim = data.find((p) => /pudim|pudins/i.test(p.name)) ?? null;
-      const caseirinho = data.find((p) => /caseirinho/i.test(p.name)) ?? null;
-      setBumps({ pudim: pudim as Product | null, caseirinho: caseirinho as Product | null });
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, category, name, description, price, image_url, stock, badge")
+          .eq("active", true)
+          .gt("stock", 0);
+        if (error) throw error;
+        if (cancelled) return;
+        const products = normalizeProducts(data);
+        const pudim = products.find((p) => /pudim|pudins/i.test(p?.name ?? "")) ?? null;
+        const caseirinho = products.find((p) => /caseirinho/i.test(p?.name ?? "")) ?? null;
+        setBumps({ pudim, caseirinho });
+        setBumpWarning(null);
+      } catch (error) {
+        console.warn("Falha ao carregar ofertas do carrinho", error);
+        if (!cancelled) {
+          setBumps({ pudim: null, caseirinho: null });
+          setBumpWarning("Não foi possível carregar ofertas adicionais agora.");
+        }
+      }
     })();
     return () => {
       cancelled = true;
