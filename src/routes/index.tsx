@@ -84,8 +84,8 @@ function Store() {
       "tapioca",
     ];
 
-    const normalize = (s: string) =>
-      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    const normalize = (s: unknown) =>
+      String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
     const rankOf = (name?: string) => {
       const n = normalize(name);
@@ -148,7 +148,7 @@ function Store() {
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map((p) => (
-                <ProductCard key={p?.id ?? crypto.randomUUID()} product={p} />
+                <ProductCard key={p?.id ?? "produto"} product={p} />
               ))}
             </div>
           )}
