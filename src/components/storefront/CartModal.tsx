@@ -261,39 +261,42 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       }
     }
     setSubmitting(true);
-    const fullAddress =
-      mode === "entrega" && selectedCity
-        ? `${address.trim()} — ${selectedCity.label}`
-        : PICKUP_ADDRESS;
-    const snapshotItems = items.map((i) => ({ ...i }));
-    const snapshotTotal = finalTotal;
-    const { data, error } = await supabase.rpc("place_order", {
-      _customer_name: name.trim(),
-      _customer_phone: phone.trim(),
-      _mode: mode,
-      _address: fullAddress,
-      _delivery_fee: deliveryFee,
-      _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
-    });
-
-    if (error) {
-      setSubmitting(false);
-      toast.error(error.message || "Não foi possível concluir o pedido");
-      return;
-    }
-    const orderId = typeof data === "string" ? data : "";
-    const pendingInfo: SuccessInfo = {
-      orderId,
-      name: name.trim(),
-      phone: phone.trim(),
-      mode,
-      address: fullAddress,
-      items: snapshotItems,
-      total: snapshotTotal,
-    };
-
-
     try {
+      const fullAddress =
+        mode === "entrega" && selectedCity
+          ? `${address.trim()} — ${selectedCity.label}`
+          : PICKUP_ADDRESS;
+      const snapshotItems = items.filter((i) => i?.product?.id).map((i) => ({ ...i }));
+      const orderItems = snapshotItems.map((i) => ({ product_id: i.product.id, quantity: i.qty }));
+      if (orderItems.length === 0) {
+        toast.error("Seu carrinho está vazio");
+        return;
+      }
+      const snapshotTotal = finalTotal;
+      const { data, error } = await supabase.rpc("place_order", {
+        _customer_name: name.trim(),
+        _customer_phone: phone.trim(),
+        _mode: mode,
+        _address: fullAddress,
+        _delivery_fee: deliveryFee,
+        _items: orderItems,
+      });
+
+      if (error) {
+        toast.error(error.message || "Não foi possível concluir o pedido");
+        return;
+      }
+      const orderId = typeof data === "string" ? data : "";
+      const pendingInfo: SuccessInfo = {
+        orderId,
+        name: name.trim(),
+        phone: phone.trim(),
+        mode,
+        address: fullAddress,
+        items: snapshotItems,
+        total: snapshotTotal,
+      };
+
       if (method === "pix") {
         // Manual PIX: no Mercado Pago API call — show static recipient key.
         setPending(pendingInfo);
@@ -307,6 +310,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         clear();
       }
     } catch (e: unknown) {
+      console.warn("Falha ao finalizar pedido", e);
       const msg = e instanceof Error ? e.message : "Falha ao iniciar pagamento";
       toast.error(msg);
     } finally {
