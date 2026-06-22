@@ -505,31 +505,43 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                 </p>
               ) : (
                 <ul className="space-y-4">
-                  {items.map(({ product, qty }) => (
-                    <li key={product.id} className="flex gap-3">
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="h-16 w-16 rounded-xl object-cover"
-                      />
+                  {items.map(({ product, qty }) => {
+                    const productId = product?.id ?? "";
+                    const productName = product?.name || "Produto sem nome";
+                    const imageUrl = product?.image_url || "";
+                    const price = product?.price ?? 0;
+
+                    return (
+                    <li key={productId || productName} className="flex gap-3">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={productName}
+                          className="h-16 w-16 rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-muted text-[10px] text-muted-foreground">
+                          sem imagem
+                        </div>
+                      )}
                       <div className="flex flex-1 flex-col">
                         <div className="flex justify-between gap-2">
                           <span className="text-sm font-medium leading-tight text-card-foreground">
-                            {product.name}
+                            {productName}
                           </span>
                           <button
-                            onClick={() => remove(product.id)}
+                            onClick={() => productId && remove(productId)}
                             className="text-muted-foreground hover:text-destructive"
                             aria-label="Remover"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
-                        <span className="mt-1 text-xs text-muted-foreground">{formatBRL(product.price)}</span>
+                        <span className="mt-1 text-xs text-muted-foreground">{formatBRL(price)}</span>
                         <div className="mt-2 flex items-center justify-between">
                           <div className="inline-flex items-center rounded-full bg-secondary">
                             <button
-                              onClick={() => setQty(product.id, qty - 1)}
+                              onClick={() => productId && setQty(productId, qty - 1)}
                               className="p-2 text-secondary-foreground hover:text-primary"
                               aria-label="Diminuir"
                             >
@@ -537,7 +549,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                             </button>
                             <span className="w-6 text-center text-sm font-medium">{qty}</span>
                             <button
-                              onClick={() => setQty(product.id, qty + 1)}
+                              onClick={() => productId && setQty(productId, qty + 1)}
                               className="p-2 text-secondary-foreground hover:text-primary"
                               aria-label="Aumentar"
                             >
@@ -545,12 +557,13 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                             </button>
                           </div>
                           <span className="font-display text-base text-primary">
-                            {formatBRL(product.price * qty)}
+                            {formatBRL(price * qty)}
                           </span>
                         </div>
                       </div>
                     </li>
-                  ))}
+                  );
+                  })}
                 </ul>
               )}
             </div>
