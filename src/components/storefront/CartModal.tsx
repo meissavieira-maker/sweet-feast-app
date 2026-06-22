@@ -211,7 +211,6 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         const { data, error } = await supabase
           .from("products")
           .select("id, category, name, description, price, image_url, stock, badge")
-          .eq("active", true)
           .gt("stock", 0);
         if (error) throw error;
         if (cancelled) return;
