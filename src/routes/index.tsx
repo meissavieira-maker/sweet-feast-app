@@ -8,7 +8,7 @@ import { ProductCard } from "@/components/storefront/ProductCard";
 import { CartFab } from "@/components/storefront/CartFab";
 import { CartModal } from "@/components/storefront/CartModal";
 import { CartProvider } from "@/lib/cart-context";
-import { categories, type Product } from "@/lib/products";
+import { categories, normalizeProducts, type Product } from "@/lib/products";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -36,24 +36,31 @@ function Index() {
 }
 
 function Store() {
-  const [activeCat, setActiveCat] = useState(categories[0].id);
+  const [activeCat, setActiveCat] = useState(categories[0]?.id ?? "fatias");
   const [cartOpen, setCartOpen] = useState(false);
+  const [productWarning, setProductWarning] = useState<string | null>(null);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["storefront-products"],
     queryFn: async (): Promise<Product[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id,name,description,price,category,image_url,stock,badge")
-        .eq("active", true)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as Product[];
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id,name,description,price,category,image_url,stock,badge")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        setProductWarning(null);
+        return normalizeProducts(data);
+      } catch (error) {
+        console.warn("Falha ao carregar produtos", error);
+        setProductWarning("Não foi possível carregar o cardápio agora. Tente novamente em instantes.");
+        return [];
+      }
     },
   });
 
   const visible = useMemo(() => {
-    const filtered = products.filter((p) => p.category === activeCat);
+    const filtered = products.filter((p) => p?.category === activeCat);
     if (activeCat !== "fatias") return filtered;
 
     const order: string[] = [
@@ -76,18 +83,18 @@ function Store() {
       "tapioca",
     ];
 
-    const normalize = (s: string) =>
-      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    const normalize = (s: unknown) =>
+      String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
-    const rankOf = (name: string) => {
+    const rankOf = (name?: string) => {
       const n = normalize(name);
       const idx = order.indexOf(n);
       return idx === -1 ? Infinity : idx;
     };
 
-    return [...filtered].sort((a, b) => rankOf(a.name) - rankOf(b.name));
+    return [...filtered].sort((a, b) => rankOf(a?.name) - rankOf(b?.name));
   }, [products, activeCat]);
-  const activeLabel = categories.find((c) => c.id === activeCat)?.label;
+  const activeLabel = categories.find((c) => c.id === activeCat)?.label ?? "Produtos";
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -106,6 +113,12 @@ function Store() {
         <CategoryTabs active={activeCat} onChange={setActiveCat} />
 
         <section className="py-8 sm:py-12">
+          {productWarning && (
+            <div className="mb-5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {productWarning}
+            </div>
+          )}
+
           <div className="mb-6 flex items-end justify-between">
             <div>
               <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Coleção</p>
@@ -134,7 +147,7 @@ function Store() {
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map((p) => (
-                <ProductCard key={p.id} product={p} />
+                <ProductCard key={p?.id ?? "produto"} product={p} />
               ))}
             </div>
           )}
