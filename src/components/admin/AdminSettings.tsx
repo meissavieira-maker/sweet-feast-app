@@ -17,12 +17,29 @@ export function AdminSettings() {
   const [storeOpen, setStoreOpen] = useState(true);
   const [togglingStore, setTogglingStore] = useState(false);
 
+  const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [heroImage, setHeroImage] = useState("");
+  const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [heroTitle, setHeroTitle] = useState("");
+  const [heroNotice, setHeroNotice] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [savingHero, setSavingHero] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
         .from("app_settings")
         .select("key,value")
-        .in("key", ["mp_public_key", "mp_access_token", "store_open"]);
+        .in("key", [
+          "mp_public_key",
+          "mp_access_token",
+          "store_open",
+          "hero_image_url",
+          "hero_subtitle",
+          "hero_title",
+          "hero_notice",
+        ]);
       if (error) {
         toast.error("Não foi possível carregar as configurações");
       } else {
@@ -30,10 +47,57 @@ export function AdminSettings() {
         setPublicKey(map.mp_public_key ?? "");
         setAccessToken(map.mp_access_token ?? "");
         setStoreOpen(map.store_open !== "false");
+        setHeroImage(map.hero_image_url ?? "");
+        setHeroSubtitle(map.hero_subtitle ?? HERO_DEFAULTS.hero_subtitle);
+        setHeroTitle(map.hero_title ?? HERO_DEFAULTS.hero_title);
+        setHeroNotice(map.hero_notice ?? HERO_DEFAULTS.hero_notice);
       }
       setLoading(false);
     })();
   }, []);
+
+  async function handleHeroUpload(file: File) {
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `hero/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("product-images")
+        .upload(path, file, { cacheControl: "31536000", upsert: false });
+      if (upErr) throw upErr;
+      const { data: signed, error: sErr } = await supabase.storage
+        .from("product-images")
+        .createSignedUrl(path, SIGNED_TTL);
+      if (sErr) throw sErr;
+      setHeroImage(signed.signedUrl);
+      toast.success("Imagem enviada — clique em Salvar para aplicar");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha no upload");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleSaveHero() {
+    setSavingHero(true);
+    const { error } = await supabase.from("app_settings").upsert(
+      [
+        { key: "hero_image_url", value: heroImage.trim() },
+        { key: "hero_subtitle", value: heroSubtitle.trim() },
+        { key: "hero_title", value: heroTitle.trim() },
+        { key: "hero_notice", value: heroNotice.trim() },
+      ],
+      { onConflict: "key" },
+    );
+    setSavingHero(false);
+    if (error) {
+      toast.error(error.message || "Falha ao salvar topo da página");
+      return;
+    }
+    await qc.invalidateQueries({ queryKey: ["hero-settings"] });
+    toast.success("Topo da página atualizado!");
+  }
+
 
   async function handleSave() {
     setSaving(true);
