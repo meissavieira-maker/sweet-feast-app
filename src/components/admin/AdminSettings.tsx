@@ -102,6 +102,23 @@ export function AdminSettings() {
     toast.success("Topo da página atualizado!");
   }
 
+  async function handleSaveWhats() {
+    setSavingWhats(true);
+    const { error } = await supabase.from("app_settings").upsert(
+      [{ key: "whatsapp_template", value: whatsappTemplate }],
+      { onConflict: "key" },
+    );
+    setSavingWhats(false);
+    if (error) {
+      toast.error(error.message || "Falha ao salvar template");
+      return;
+    }
+    await qc.invalidateQueries({ queryKey: ["hero-settings"] });
+    toast.success("Template do WhatsApp atualizado!");
+  }
+
+
+
 
   async function handleSave() {
     setSaving(true);
