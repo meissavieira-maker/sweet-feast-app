@@ -301,6 +301,54 @@ export function AdminSettings() {
         </div>
       </div>
 
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="mb-5 flex items-center gap-2">
+          <ImageIcon className="h-5 w-5 text-primary" />
+          <div>
+            <h2 className="font-display text-lg text-card-foreground">Comanda do WhatsApp</h2>
+            <p className="text-xs text-muted-foreground">
+              Edite o texto enviado ao cliente. Use variáveis entre chaves:
+              <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{id}"}</code>
+              <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{cliente}"}</code>
+              <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{telefone}"}</code>
+              <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{modo}"}</code>
+              <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{endereco}"}</code>
+              <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{calda}"}</code>
+              <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{itens}"}</code>
+              <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{total}"}</code>
+            </p>
+          </div>
+        </div>
+
+        <textarea
+          value={whatsappTemplate}
+          onChange={(e) => setWhatsappTemplate(e.target.value)}
+          rows={14}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 font-mono text-xs outline-none focus:border-primary"
+        />
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleSaveWhats}
+            disabled={savingWhats}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:brightness-110 disabled:opacity-60"
+          >
+            {savingWhats ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Salvar template
+          </button>
+          <button
+            type="button"
+            onClick={() => setWhatsappTemplate(HERO_DEFAULTS.whatsapp_template)}
+            className="text-xs text-muted-foreground underline hover:text-cherry"
+          >
+            Restaurar padrão
+          </button>
+        </div>
+      </div>
+
+
+
+
 
       <div className="rounded-2xl border border-border bg-card p-6">
         <div className="mb-5 flex items-center gap-2">
