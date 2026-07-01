@@ -259,6 +259,11 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         return;
       }
     }
+    if (!calda) {
+      toast.error("Escolha a calda do seu pedido");
+      return;
+    }
+    const caldaLabel = CALDA_OPTIONS.find((c) => c.id === calda)?.label ?? "Sem Calda";
     setSubmitting(true);
     const fullAddress =
       mode === "entrega" && selectedCity
@@ -273,6 +278,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       _address: fullAddress,
       _delivery_fee: deliveryFee,
       _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
+      _notes: `Calda escolhida: ${caldaLabel}`,
     });
 
     if (error) {
@@ -289,6 +295,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       address: fullAddress,
       items: snapshotItems,
       total: snapshotTotal,
+      calda: caldaLabel,
     };
 
 
