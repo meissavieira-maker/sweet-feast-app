@@ -345,6 +345,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       setPhone("");
       setAddress("");
       setCityId("");
+      setCalda("");
       setMethod("pix");
     }
     onOpenChange(v);
