@@ -1,4 +1,4 @@
-import heroAsset from "@/assets/festival-brasil.png.asset.json";
+import heroAsset from "@/assets/festival-novo.png.asset.json";
 import { useStoreStatus } from "@/hooks/use-store-status";
 
 export function StoreHeader() {
