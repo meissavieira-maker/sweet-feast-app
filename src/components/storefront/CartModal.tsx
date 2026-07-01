@@ -45,6 +45,7 @@ type SuccessInfo = {
   address: string;
   items: CartItem[];
   total: number;
+  calda: string;
 };
 
 
