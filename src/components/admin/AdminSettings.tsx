@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
-import { Loader2, Save, KeyRound, Store } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, Save, KeyRound, Store, Image as ImageIcon, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { useQueryClient } from "@tanstack/react-query";
+import { HERO_DEFAULTS } from "@/hooks/use-hero-settings";
+
+const SIGNED_TTL = 60 * 60 * 24 * 365 * 5;
 
 export function AdminSettings() {
   const [loading, setLoading] = useState(true);
