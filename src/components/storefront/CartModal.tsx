@@ -12,6 +12,14 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
+import { useHeroSettings, DEFAULT_WHATSAPP_TEMPLATE } from "@/hooks/use-hero-settings";
+
+const CALDA_OPTIONS = [
+  { id: "chocolate", label: "Calda de Chocolate" },
+  { id: "ninho", label: "Calda de Ninho" },
+  { id: "sem", label: "Sem Calda" },
+] as const;
+type CaldaId = (typeof CALDA_OPTIONS)[number]["id"];
 
 const DELIVERY_CITIES = [
   { id: "cachoeira", label: "Cachoeira", fee: 7 },
