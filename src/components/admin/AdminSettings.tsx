@@ -171,6 +171,118 @@ export function AdminSettings() {
 
       <div className="rounded-2xl border border-border bg-card p-6">
         <div className="mb-5 flex items-center gap-2">
+          <ImageIcon className="h-5 w-5 text-primary" />
+          <div>
+            <h2 className="font-display text-lg text-card-foreground">Topo da Página</h2>
+            <p className="text-xs text-muted-foreground">
+              Edite a imagem de fundo, títulos e a barra de aviso da home.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Imagem de Fundo do Banner
+            </label>
+            {heroImage && (
+              <div className="mb-3 overflow-hidden rounded-xl border border-border bg-background">
+                <img src={heroImage} alt="Prévia do banner" className="h-40 w-full object-cover object-right" />
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleHeroUpload(f);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm hover:text-primary disabled:opacity-60"
+              >
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {uploading ? "Enviando..." : "Enviar nova imagem"}
+              </button>
+              {heroImage && (
+                <button
+                  type="button"
+                  onClick={() => setHeroImage("")}
+                  className="text-xs text-muted-foreground underline hover:text-cherry"
+                >
+                  Restaurar imagem padrão
+                </button>
+              )}
+            </div>
+            <input
+              type="text"
+              value={heroImage}
+              onChange={(e) => setHeroImage(e.target.value)}
+              placeholder="ou cole uma URL de imagem"
+              className="mt-2 w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-mono outline-none focus:border-primary"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Subtítulo Superior
+            </label>
+            <input
+              type="text"
+              value={heroSubtitle}
+              onChange={(e) => setHeroSubtitle(e.target.value)}
+              placeholder="Confeitaria Artesanal"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Título Principal
+            </label>
+            <input
+              type="text"
+              value={heroTitle}
+              onChange={(e) => setHeroTitle(e.target.value)}
+              placeholder="Meissa Vieira Confeitaria"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Barra de Aviso
+            </label>
+            <textarea
+              value={heroNotice}
+              onChange={(e) => setHeroNotice(e.target.value)}
+              rows={2}
+              placeholder="Pedidos realizados para o dia..."
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+            />
+          </div>
+
+          <button
+            onClick={handleSaveHero}
+            disabled={savingHero || uploading}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:brightness-110 disabled:opacity-60"
+          >
+            {savingHero ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Salvar topo da página
+          </button>
+        </div>
+      </div>
+
+
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="mb-5 flex items-center gap-2">
           <KeyRound className="h-5 w-5 text-primary" />
           <div>
             <h2 className="font-display text-lg text-card-foreground">Mercado Pago</h2>
