@@ -10,14 +10,14 @@ export function StoreHeader() {
   const title = hero?.hero_title ?? "";
 
   return (
-    <header className="relative overflow-hidden bg-[#1a0608]">
+    <header className="relative overflow-hidden bg-green-700">
       {/* Background image */}
       <div className="absolute inset-0">
         {imageUrl && (
           <img
             src={imageUrl}
             alt={title}
-            className="h-full w-full object-cover object-right"
+            className="h-full w-full object-cover object-center"
             width={1600}
             height={1200}
           />
@@ -27,12 +27,13 @@ export function StoreHeader() {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(90deg, #100406 0%, rgba(26,6,10,0.96) 28%, rgba(40,10,16,0.78) 48%, rgba(20,5,8,0.35) 68%, rgba(0,0,0,0) 85%)",
+              "linear-gradient(90deg, rgba(16,4,6,0.85) 0%, rgba(26,6,10,0.65) 30%, rgba(40,10,16,0.35) 55%, rgba(0,0,0,0.15) 80%, rgba(0,0,0,0) 100%)",
           }}
         />
         {/* Soft bottom fade into page bg */}
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
       </div>
+
 
       {/* Content */}
       <div className="relative mx-auto max-w-6xl px-5 pt-8 pb-16 sm:pt-12 sm:pb-24">
