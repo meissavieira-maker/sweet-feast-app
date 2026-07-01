@@ -10,6 +10,7 @@ import { CartModal } from "@/components/storefront/CartModal";
 import { CartProvider } from "@/lib/cart-context";
 import { categories, type Product } from "@/lib/products";
 import { supabase } from "@/integrations/supabase/client";
+import { useHeroSettings } from "@/hooks/use-hero-settings";
 
 export const Route = createFileRoute("/")({
   head: () => ({
