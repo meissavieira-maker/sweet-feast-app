@@ -41,6 +41,7 @@ export function AdminSettings() {
           "hero_subtitle",
           "hero_title",
           "hero_notice",
+          "whatsapp_template",
         ]);
       if (error) {
         toast.error("Não foi possível carregar as configurações");
@@ -53,6 +54,7 @@ export function AdminSettings() {
         setHeroSubtitle(map.hero_subtitle ?? HERO_DEFAULTS.hero_subtitle);
         setHeroTitle(map.hero_title ?? HERO_DEFAULTS.hero_title);
         setHeroNotice(map.hero_notice ?? HERO_DEFAULTS.hero_notice);
+        setWhatsappTemplate(map.whatsapp_template ?? HERO_DEFAULTS.whatsapp_template);
       }
       setLoading(false);
     })();
