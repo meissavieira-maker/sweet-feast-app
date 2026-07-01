@@ -12,6 +12,14 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
+import { useHeroSettings, DEFAULT_WHATSAPP_TEMPLATE } from "@/hooks/use-hero-settings";
+
+const CALDA_OPTIONS = [
+  { id: "chocolate", label: "Calda de Chocolate" },
+  { id: "ninho", label: "Calda de Ninho" },
+  { id: "sem", label: "Sem Calda" },
+] as const;
+type CaldaId = (typeof CALDA_OPTIONS)[number]["id"];
 
 const DELIVERY_CITIES = [
   { id: "cachoeira", label: "Cachoeira", fee: 7 },
@@ -37,6 +45,7 @@ type SuccessInfo = {
   address: string;
   items: CartItem[];
   total: number;
+  calda: string;
 };
 
 
@@ -85,6 +94,7 @@ function loadMpSdk(): Promise<void> {
 export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { items, setQty, remove, add, total, count, clear } = useCart();
   const { isOpen: storeOpen } = useStoreStatus();
+  const { data: heroSettings } = useHeroSettings();
   const [bumps, setBumps] = useState<{ pudim: Product | null; caseirinho: Product | null }>({ pudim: null, caseirinho: null });
   const [mode, setMode] = useState<"entrega" | "retirada">("entrega");
   const [method, setMethod] = useState<PaymentMethod>("pix");
@@ -92,6 +102,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [phone, setPhone] = useState("");
   const [cityId, setCityId] = useState<string>("");
   const [address, setAddress] = useState("");
+  const [calda, setCalda] = useState<CaldaId | "">("");
   const [submitting, setSubmitting] = useState(false);
   const [pix, setPix] = useState<PixInfo | null>(null);
   const [pending, setPending] = useState<SuccessInfo | null>(null);
@@ -248,6 +259,11 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         return;
       }
     }
+    if (!calda) {
+      toast.error("Escolha a calda do seu pedido");
+      return;
+    }
+    const caldaLabel = CALDA_OPTIONS.find((c) => c.id === calda)?.label ?? "Sem Calda";
     setSubmitting(true);
     const fullAddress =
       mode === "entrega" && selectedCity
@@ -262,6 +278,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       _address: fullAddress,
       _delivery_fee: deliveryFee,
       _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
+      _notes: `Calda escolhida: ${caldaLabel}`,
     });
 
     if (error) {
@@ -278,6 +295,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       address: fullAddress,
       items: snapshotItems,
       total: snapshotTotal,
+      calda: caldaLabel,
     };
 
 
@@ -327,6 +345,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       setPhone("");
       setAddress("");
       setCityId("");
+      setCalda("");
       setMethod("pix");
     }
     onOpenChange(v);
@@ -464,7 +483,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
             <button
               type="button"
-              onClick={() => openWhatsAppOrder(success)}
+              onClick={() => openWhatsAppOrder(success, heroSettings?.whatsapp_template ?? DEFAULT_WHATSAPP_TEMPLATE)}
               className="mt-6 inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-4 text-base font-semibold text-white shadow-glow transition hover:brightness-110"
             >
               <WhatsAppIcon className="h-5 w-5" />
@@ -635,6 +654,37 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                   )}
                 </div>
 
+                <div className="mt-4 rounded-xl border border-border bg-card p-3">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Escolha a calda <span className="text-cherry">*</span>
+                  </p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {CALDA_OPTIONS.map((c) => {
+                      const active = calda === c.id;
+                      return (
+                        <label
+                          key={c.id}
+                          className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-all ${
+                            active
+                              ? "border-primary bg-primary/10 text-primary font-semibold"
+                              : "border-border bg-background hover:border-primary/40"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="calda"
+                            value={c.id}
+                            checked={active}
+                            onChange={() => setCalda(c.id)}
+                            className="h-4 w-4 accent-primary"
+                          />
+                          {c.label}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <dl className="mt-4 space-y-1.5 text-sm">
                   <div className="flex justify-between text-muted-foreground">
                     <dt>Subtotal</dt>
@@ -777,34 +827,31 @@ function ModeButton({
   );
 }
 
-function buildWhatsAppMessage(s: SuccessInfo) {
+function buildWhatsAppMessage(s: SuccessInfo, template: string) {
   const shortId = s.orderId ? s.orderId.slice(0, 8).toUpperCase() : "—";
   const modoLabel = s.mode === "entrega" ? "Entrega (Motoboy)" : "Retirada no Local";
   const endereco = s.mode === "entrega" ? s.address : PICKUP_ADDRESS;
   const itensTxt = s.items
     .map((i) => `🍰 ${i.qty}x ${i.product.name} — ${formatBRL(i.product.price * i.qty)}`)
     .join("\n");
-  return [
-    `🍰 *1º Festival de Fatias — Meissa Vieira* 🍰`,
-    `-----------------------------------------`,
-    `🆔 *Pedido:* #${shortId}`,
-    `👤 *Cliente:* ${s.name}`,
-    `📞 *WhatsApp:* ${s.phone || "—"}`,
-    `🛵 *Forma de Envio:* ${modoLabel}`,
-    `📍 *Endereço:* ${endereco}`,
-    ``,
-    `🛒 *Fatias Reservadas:*`,
-    itensTxt,
-    ``,
-    `💰 *Total Geral:* ${formatBRL(s.total)}`,
-    `-----------------------------------------`,
-    `👉 *Lembrete:* Seus produtos estão reservados! Os envios e retiradas começam neste Domingo a partir das 14h.`,
-  ].join("\n");
+  const vars: Record<string, string> = {
+    id: shortId,
+    cliente: s.name || "—",
+    telefone: s.phone || "—",
+    modo: modoLabel,
+    endereco,
+    itens: itensTxt,
+    total: formatBRL(s.total),
+    calda: s.calda || "—",
+  };
+  return template.replace(/\{(\w+)\}/g, (_m, k: string) =>
+    Object.prototype.hasOwnProperty.call(vars, k) ? vars[k] : `{${k}}`,
+  );
 }
 
 
-function openWhatsAppOrder(s: SuccessInfo) {
-  const mensagem = buildWhatsAppMessage(s);
+function openWhatsAppOrder(s: SuccessInfo, template: string) {
+  const mensagem = buildWhatsAppMessage(s, template);
   window.open("https://wa.me/5575991074216?text=" + encodeURIComponent(mensagem), "_blank");
 }
 
