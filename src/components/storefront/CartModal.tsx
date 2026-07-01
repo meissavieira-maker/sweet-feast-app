@@ -827,34 +827,31 @@ function ModeButton({
   );
 }
 
-function buildWhatsAppMessage(s: SuccessInfo) {
+function buildWhatsAppMessage(s: SuccessInfo, template: string) {
   const shortId = s.orderId ? s.orderId.slice(0, 8).toUpperCase() : "—";
   const modoLabel = s.mode === "entrega" ? "Entrega (Motoboy)" : "Retirada no Local";
   const endereco = s.mode === "entrega" ? s.address : PICKUP_ADDRESS;
   const itensTxt = s.items
     .map((i) => `🍰 ${i.qty}x ${i.product.name} — ${formatBRL(i.product.price * i.qty)}`)
     .join("\n");
-  return [
-    `🍰 *1º Festival de Fatias — Meissa Vieira* 🍰`,
-    `-----------------------------------------`,
-    `🆔 *Pedido:* #${shortId}`,
-    `👤 *Cliente:* ${s.name}`,
-    `📞 *WhatsApp:* ${s.phone || "—"}`,
-    `🛵 *Forma de Envio:* ${modoLabel}`,
-    `📍 *Endereço:* ${endereco}`,
-    ``,
-    `🛒 *Fatias Reservadas:*`,
-    itensTxt,
-    ``,
-    `💰 *Total Geral:* ${formatBRL(s.total)}`,
-    `-----------------------------------------`,
-    `👉 *Lembrete:* Seus produtos estão reservados! Os envios e retiradas começam neste Domingo a partir das 14h.`,
-  ].join("\n");
+  const vars: Record<string, string> = {
+    id: shortId,
+    cliente: s.name || "—",
+    telefone: s.phone || "—",
+    modo: modoLabel,
+    endereco,
+    itens: itensTxt,
+    total: formatBRL(s.total),
+    calda: s.calda || "—",
+  };
+  return template.replace(/\{(\w+)\}/g, (_m, k: string) =>
+    Object.prototype.hasOwnProperty.call(vars, k) ? vars[k] : `{${k}}`,
+  );
 }
 
 
-function openWhatsAppOrder(s: SuccessInfo) {
-  const mensagem = buildWhatsAppMessage(s);
+function openWhatsAppOrder(s: SuccessInfo, template: string) {
+  const mensagem = buildWhatsAppMessage(s, template);
   window.open("https://wa.me/5575991074216?text=" + encodeURIComponent(mensagem), "_blank");
 }
 
