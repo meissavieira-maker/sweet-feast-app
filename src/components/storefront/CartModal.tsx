@@ -654,6 +654,37 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                   )}
                 </div>
 
+                <div className="mt-4 rounded-xl border border-border bg-card p-3">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Escolha a calda <span className="text-cherry">*</span>
+                  </p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {CALDA_OPTIONS.map((c) => {
+                      const active = calda === c.id;
+                      return (
+                        <label
+                          key={c.id}
+                          className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-all ${
+                            active
+                              ? "border-primary bg-primary/10 text-primary font-semibold"
+                              : "border-border bg-background hover:border-primary/40"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="calda"
+                            value={c.id}
+                            checked={active}
+                            onChange={() => setCalda(c.id)}
+                            className="h-4 w-4 accent-primary"
+                          />
+                          {c.label}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <dl className="mt-4 space-y-1.5 text-sm">
                   <div className="flex justify-between text-muted-foreground">
                     <dt>Subtotal</dt>
