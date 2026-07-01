@@ -23,8 +23,10 @@ export function AdminSettings() {
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [heroTitle, setHeroTitle] = useState("");
   const [heroNotice, setHeroNotice] = useState("");
+  const [whatsappTemplate, setWhatsappTemplate] = useState("");
   const [uploading, setUploading] = useState(false);
   const [savingHero, setSavingHero] = useState(false);
+  const [savingWhats, setSavingWhats] = useState(false);
 
   useEffect(() => {
     (async () => {
