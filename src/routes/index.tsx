@@ -39,6 +39,7 @@ function Index() {
 function Store() {
   const [activeCat, setActiveCat] = useState(categories[0].id);
   const [cartOpen, setCartOpen] = useState(false);
+  const { data: hero } = useHeroSettings();
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["storefront-products"],
