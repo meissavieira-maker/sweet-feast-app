@@ -1,19 +1,27 @@
-import heroAsset from "@/assets/festival-novo.png.asset.json";
 import { useStoreStatus } from "@/hooks/use-store-status";
+import { useHeroSettings } from "@/hooks/use-hero-settings";
 
 export function StoreHeader() {
   const { isOpen } = useStoreStatus();
+  const { data: hero } = useHeroSettings();
+
+  const imageUrl = hero?.hero_image_url;
+  const subtitle = hero?.hero_subtitle ?? "";
+  const title = hero?.hero_title ?? "";
+
   return (
     <header className="relative overflow-hidden bg-[#1a0608]">
       {/* Background image */}
       <div className="absolute inset-0">
-        <img
-          src={heroAsset.url}
-          alt="1º Festival de Fatias no Delivery — Meissa Vieira Confeitaria"
-          className="h-full w-full object-cover object-right"
-          width={1600}
-          height={1200}
-        />
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={title}
+            className="h-full w-full object-cover object-right"
+            width={1600}
+            height={1200}
+          />
+        )}
         {/* Left-side dark wine gradient to smooth blurred edge & host text */}
         <div
           className="absolute inset-0"
@@ -24,20 +32,6 @@ export function StoreHeader() {
         />
         {/* Soft bottom fade into page bg */}
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
-      </div>
-
-      {/* Giant FESTIVAL watermark — subtle wine texture */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 select-none text-center font-display font-black uppercase leading-none tracking-tighter"
-        style={{
-          fontSize: "clamp(6rem, 22vw, 22rem)",
-          color: "rgba(60, 8, 14, 0.28)",
-          mixBlendMode: "multiply",
-          letterSpacing: "-0.06em",
-        }}
-      >
-        FESTIVAL
       </div>
 
       {/* Content */}
@@ -59,13 +53,13 @@ export function StoreHeader() {
 
         <div className="mt-16 sm:mt-24 max-w-xl text-white text-center sm:text-left">
           <p className="text-[11px] tracking-[0.35em] uppercase text-gold mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
-            Confeitaria Artesanal
+            {subtitle}
           </p>
           <h1
             className="font-display text-4xl sm:text-6xl lg:text-7xl leading-[1.02] font-medium text-white"
             style={{ textShadow: "0 4px 20px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.6)" }}
           >
-            Meissa <em className="text-gold not-italic font-normal italic">Vieira</em> Confeitaria
+            {title}
           </h1>
         </div>
       </div>
