@@ -98,7 +98,7 @@ function Store() {
       <div className="mx-auto max-w-6xl px-5 pt-5">
         <div className="rounded-2xl border border-gold/40 bg-gradient-to-r from-cherry/15 via-card to-gold/10 px-4 py-3 sm:px-6 sm:py-4 shadow-soft">
           <p className="text-center text-sm sm:text-base font-semibold text-foreground leading-snug">
-            Pedidos realizados para o dia <span className="text-cherry">5 de julho</span>. Entregas e Retiradas a partir das 10h.
+            {hero?.hero_notice ?? "Pedidos realizados para o dia 5 de julho. Entregas e Retiradas a partir das 10h."}
           </p>
         </div>
       </div>
