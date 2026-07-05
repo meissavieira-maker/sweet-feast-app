@@ -25,6 +25,7 @@ type Order = {
   total: number;
   status: OrderStatus;
   created_at: string;
+  notes: string | null;
   order_items: OrderItem[];
 };
 
