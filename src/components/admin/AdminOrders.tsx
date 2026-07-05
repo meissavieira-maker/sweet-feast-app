@@ -156,6 +156,12 @@ export function AdminOrders() {
                     <span className="text-muted-foreground">{formatBRL(it.unit_price * it.quantity)}</span>
                   </li>
                 ))}
+                {extractCalda(o.notes) && (
+                  <li className="flex items-center gap-1.5 py-1.5 text-xs text-muted-foreground/80">
+                    <Plus className="h-3 w-3 text-muted-foreground/60" />
+                    {extractCalda(o.notes)}
+                  </li>
+                )}
               </ul>
             </article>
           ))}
