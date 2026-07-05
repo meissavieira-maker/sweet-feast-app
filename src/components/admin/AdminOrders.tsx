@@ -45,6 +45,12 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
   cancelado: "bg-muted text-muted-foreground",
 };
 
+function extractCalda(notes: string | null): string | null {
+  if (!notes) return null;
+  const match = notes.match(/Calda escolhida:\s*(.+)/i);
+  return match ? match[1].trim() : null;
+}
+
 export function AdminOrders() {
   const qc = useQueryClient();
 
