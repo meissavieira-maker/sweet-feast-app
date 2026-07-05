@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Bike, Store as StoreIcon } from "lucide-react";
+import { Loader2, Bike, Store as StoreIcon, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/cart-context";
 import { toast } from "sonner";
