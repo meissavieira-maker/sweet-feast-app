@@ -54,7 +54,7 @@ export function AdminOrders() {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "id,customer_name,customer_phone,mode,address,subtotal,delivery_fee,total,status,created_at,order_items(id,product_name,unit_price,quantity)",
+          "id,customer_name,customer_phone,mode,address,subtotal,delivery_fee,total,status,created_at,notes,order_items(id,product_name,unit_price,quantity)",
         )
         .order("created_at", { ascending: false })
         .limit(100);
