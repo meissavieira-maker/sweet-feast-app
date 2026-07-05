@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Bike, Store as StoreIcon } from "lucide-react";
+import { Loader2, Bike, Store as StoreIcon, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/cart-context";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ type Order = {
   total: number;
   status: OrderStatus;
   created_at: string;
+  notes: string | null;
   order_items: OrderItem[];
 };
 
@@ -44,6 +45,12 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
   cancelado: "bg-muted text-muted-foreground",
 };
 
+function extractCalda(notes: string | null): string | null {
+  if (!notes) return null;
+  const match = notes.match(/Calda escolhida:\s*(.+)/i);
+  return match ? match[1].trim() : null;
+}
+
 export function AdminOrders() {
   const qc = useQueryClient();
 
@@ -53,7 +60,7 @@ export function AdminOrders() {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "id,customer_name,customer_phone,mode,address,subtotal,delivery_fee,total,status,created_at,order_items(id,product_name,unit_price,quantity)",
+          "id,customer_name,customer_phone,mode,address,subtotal,delivery_fee,total,status,created_at,notes,order_items(id,product_name,unit_price,quantity)",
         )
         .order("created_at", { ascending: false })
         .limit(100);
@@ -149,6 +156,12 @@ export function AdminOrders() {
                     <span className="text-muted-foreground">{formatBRL(it.unit_price * it.quantity)}</span>
                   </li>
                 ))}
+                {extractCalda(o.notes) && (
+                  <li className="flex items-center gap-1.5 py-1.5 text-xs text-muted-foreground/80">
+                    <Plus className="h-3 w-3 text-muted-foreground/60" />
+                    {extractCalda(o.notes)}
+                  </li>
+                )}
               </ul>
             </article>
           ))}
