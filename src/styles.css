@@ -154,3 +154,11 @@
   60% { transform: scale(0.95); }
 }
 .animate-cart-bounce { animation: cart-bounce 0.45s ease; }
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
