@@ -8,22 +8,25 @@ export function CategoryTabs({
   onChange: (id: string) => void;
 }) {
   return (
-    <div className="sticky top-0 z-30 -mx-5 sm:mx-0 border-b border-border bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="flex gap-2 flex-nowrap justify-start overflow-x-auto py-3 no-scrollbar">
+    <div className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-xl">
+      <div className="mx-auto max-w-3xl px-4">
+        <div className="no-scrollbar flex gap-6 overflow-x-auto">
           {categories.map((c) => {
             const isActive = c.id === active;
             return (
               <button
                 key={c.id}
                 onClick={() => onChange(c.id)}
-                className={`whitespace-nowrap rounded-full px-3 py-2 text-xs sm:px-5 sm:py-2.5 sm:text-sm font-medium transition-all ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-soft"
-                    : "bg-secondary text-secondary-foreground hover:bg-accent"
+                className={`relative whitespace-nowrap py-3.5 text-xs font-bold uppercase tracking-wide transition-colors sm:text-sm ${
+                  isActive ? "text-brand" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {c.label}
+                <span
+                  className={`absolute inset-x-0 -bottom-px h-[3px] rounded-full transition-opacity ${
+                    isActive ? "bg-brand opacity-100" : "opacity-0"
+                  }`}
+                />
               </button>
             );
           })}
