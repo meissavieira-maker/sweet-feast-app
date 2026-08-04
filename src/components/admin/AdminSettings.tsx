@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useQueryClient } from "@tanstack/react-query";
 import { HERO_DEFAULTS } from "@/hooks/use-hero-settings";
+import { AdminHours } from "@/components/admin/AdminHours";
 
 const SIGNED_TTL = 60 * 60 * 24 * 365 * 5;
 
@@ -163,6 +164,7 @@ export function AdminSettings() {
 
   return (
     <div className="max-w-2xl space-y-6">
+      <AdminHours />
       <div className="rounded-2xl border border-border bg-card p-6">
         <div className="mb-5 flex items-center gap-2">
           <Store className="h-5 w-5 text-primary" />
