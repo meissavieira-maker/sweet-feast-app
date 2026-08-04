@@ -1,22 +1,24 @@
-import { categories } from "@/lib/products";
+import type { CategoryRow } from "@/hooks/use-categories";
 
 export function CategoryTabs({
+  categories,
   active,
-  onChange,
+  onSelect,
 }: {
+  categories: CategoryRow[];
   active: string;
-  onChange: (id: string) => void;
+  onSelect: (slug: string) => void;
 }) {
   return (
-    <div className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-xl">
+    <div className="border-b border-border bg-card">
       <div className="mx-auto max-w-3xl px-4">
         <div className="no-scrollbar flex gap-6 overflow-x-auto">
           {categories.map((c) => {
-            const isActive = c.id === active;
+            const isActive = c.slug === active;
             return (
               <button
                 key={c.id}
-                onClick={() => onChange(c.id)}
+                onClick={() => onSelect(c.slug)}
                 className={`relative whitespace-nowrap py-3.5 text-xs font-bold uppercase tracking-wide transition-colors sm:text-sm ${
                   isActive ? "text-brand" : "text-muted-foreground hover:text-foreground"
                 }`}
