@@ -86,9 +86,6 @@ function Store() {
     },
   });
 
-  useEffect(() => {
-    if (!activeCat && tabs.length > 0) setActiveCat(tabs[0].slug);
-  }, [tabs, activeCat]);
 
   const sorted = useMemo(() => {
     const rankOf = (name: string) => {
