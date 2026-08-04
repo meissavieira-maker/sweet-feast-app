@@ -122,6 +122,11 @@ function Store() {
     return list;
   }, [categories, highlights.length, query]);
 
+  useEffect(() => {
+    if (!activeCat && tabs.length > 0) setActiveCat(tabs[0].slug);
+  }, [tabs, activeCat]);
+
+
   // Destaca a aba da seção visível durante o scroll
   useEffect(() => {
     function onScroll() {
