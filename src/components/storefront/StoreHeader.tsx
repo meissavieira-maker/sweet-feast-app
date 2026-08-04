@@ -2,6 +2,7 @@ import { Search, Share2, X } from "lucide-react";
 import { useState } from "react";
 import { useStoreStatus } from "@/hooks/use-store-status";
 import { useHeroSettings } from "@/hooks/use-hero-settings";
+import { useBusinessHours, storeStatus, DEFAULT_BUSINESS_HOURS } from "@/hooks/use-business-hours";
 
 export function StoreHeader({
   query,
@@ -12,9 +13,11 @@ export function StoreHeader({
 }) {
   const { isOpen } = useStoreStatus();
   const { data: hero } = useHeroSettings();
+  const { data: hours } = useBusinessHours();
   const [searching, setSearching] = useState(false);
 
   const title = hero?.hero_title ?? "Meissa Vieira Confeitaria";
+  const status = storeStatus(hours ?? DEFAULT_BUSINESS_HOURS, isOpen);
 
   async function share() {
     const url = typeof window !== "undefined" ? window.location.href : "";
@@ -86,10 +89,10 @@ export function StoreHeader({
         <div className="mx-auto max-w-3xl px-4 py-2.5 text-center text-xs font-medium sm:text-sm">
           <span
             className={`mr-2 inline-block h-2 w-2 rounded-full align-middle ${
-              isOpen ? "bg-emerald-400" : "bg-rose-400"
+              status.open ? "bg-emerald-400" : "bg-rose-400"
             }`}
           />
-          {isOpen ? "Loja aberta agora — faça seu pedido" : "Loja fechada, abre amanhã às 13h30"}
+          {status.message}
         </div>
       </div>
     </header>
