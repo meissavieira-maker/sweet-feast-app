@@ -123,7 +123,9 @@ function Store() {
   }, [categories, highlights.length, query]);
 
   useEffect(() => {
-    if (!activeCat && tabs.length > 0) setActiveCat(tabs[0].slug);
+    if (tabs.length > 0 && !tabs.some((t) => t.slug === activeCat) && window.scrollY < 40) {
+      setActiveCat(tabs[0].slug);
+    }
   }, [tabs, activeCat]);
 
 

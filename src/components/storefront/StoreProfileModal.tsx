@@ -16,7 +16,11 @@ const MAP_QUERY = encodeURIComponent("Rua Rodrigo Brandão, 32, Cachoeira - BA")
 const MAP_EMBED =
   "https://www.openstreetmap.org/export/embed.html?bbox=-38.9760%2C-12.6070%2C-38.9600%2C-12.5930&layer=mapnik&marker=-12.6000%2C-38.9680";
 
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const dayLabel = (d: number) => {
+  const name = DAY_LABELS_LONG[d];
+  const label = d >= 1 && d <= 5 ? `${name}-feira` : name;
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};
 
 export function StoreProfileModal({
   open,
@@ -50,7 +54,7 @@ export function StoreProfileModal({
               ) : (
                 days.map((d) => (
                   <li key={d} className="flex items-center justify-between px-4 py-3 text-sm">
-                    <span className="text-card-foreground">{capitalize(DAY_LABELS_LONG[d])}-feira</span>
+                    <span className="text-card-foreground">{dayLabel(d)}</span>
                     <span className="font-semibold text-foreground">
                       {h.open}h às {h.close}h
                     </span>
