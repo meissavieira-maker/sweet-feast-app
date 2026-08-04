@@ -8,6 +8,7 @@ import { CategoryTabs } from "@/components/storefront/CategoryTabs";
 import { ProductRow, ProductHighlightCard } from "@/components/storefront/ProductCard";
 import { BottomNav } from "@/components/storefront/BottomNav";
 import { CartModal } from "@/components/storefront/CartModal";
+import { StoreProfileModal } from "@/components/storefront/StoreProfileModal";
 import { CartProvider } from "@/lib/cart-context";
 import type { Product } from "@/lib/products";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,11 +58,14 @@ const MANUAL_ORDER: string[] = [
   "tapioca",
 ];
 
+const FEATURED_SLUG = "__mais-pedidos";
+
 const normalize = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
 function Store() {
   const [cartOpen, setCartOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("");
   const stickyRef = useRef<HTMLDivElement>(null);
@@ -82,9 +86,6 @@ function Store() {
     },
   });
 
-  useEffect(() => {
-    if (!activeCat && categories.length > 0) setActiveCat(categories[0].slug);
-  }, [categories, activeCat]);
 
   const sorted = useMemo(() => {
     const rankOf = (name: string) => {
@@ -103,16 +104,37 @@ function Store() {
   }, [sorted, query]);
 
   const highlights = useMemo(
-    () => sorted.filter((p) => p.featured && p.stock > 0).slice(0, 4),
+    () => sorted.filter((p) => p.featured).slice(0, 4),
     [sorted],
   );
+
+  const tabs = useMemo(() => {
+    const list = categories.map((c) => ({ ...c }));
+    if (highlights.length > 0 && !query) {
+      list.unshift({
+        id: "featured",
+        slug: FEATURED_SLUG,
+        label: "Mais Pedidos",
+        sort_order: -1,
+        active: true,
+      });
+    }
+    return list;
+  }, [categories, highlights.length, query]);
+
+  useEffect(() => {
+    if (tabs.length > 0 && tabs[0].slug !== activeCat && window.scrollY < 40) {
+      setActiveCat(tabs[0].slug);
+    }
+  }, [tabs, activeCat]);
+
 
   // Destaca a aba da seção visível durante o scroll
   useEffect(() => {
     function onScroll() {
       const offset = (stickyRef.current?.offsetHeight ?? 0) + 24;
       let current = activeCat;
-      for (const c of categories) {
+      for (const c of tabs) {
         const el = sectionRefs.current[c.slug];
         if (el && el.getBoundingClientRect().top - offset <= 0) current = c.slug;
       }
@@ -120,7 +142,7 @@ function Store() {
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [categories, activeCat]);
+  }, [tabs, activeCat]);
 
   function scrollToCategory(slug: string) {
     setActiveCat(slug);
@@ -135,9 +157,9 @@ function Store() {
     <div id="top" className="min-h-screen bg-background pb-32">
       <div ref={stickyRef} className="sticky top-0 z-40 shadow-sm">
         <StoreHeader query={query} onQueryChange={setQuery} />
-        <StoreInfoBar minOrder={20} />
-        {categories.length > 0 && (
-          <CategoryTabs categories={categories} active={activeCat} onSelect={scrollToCategory} />
+        <StoreInfoBar minOrder={20} onProfile={() => setProfileOpen(true)} />
+        {tabs.length > 0 && (
+          <CategoryTabs categories={tabs} active={activeCat} onSelect={scrollToCategory} />
         )}
       </div>
 
@@ -148,9 +170,15 @@ function Store() {
       ) : (
         <>
           {highlights.length > 0 && !query && (
-            <section className="mx-auto max-w-3xl px-4 pt-6">
+            <section
+              id={`cat-${FEATURED_SLUG}`}
+              ref={(el) => {
+                sectionRefs.current[FEATURED_SLUG] = el;
+              }}
+              className="mx-auto max-w-3xl scroll-mt-40 px-4 pt-6"
+            >
               <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
-                Os Mais Pedidos
+                Mais Pedidos
               </h2>
               <div className="no-scrollbar -mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2">
                 {highlights.map((p) => (
@@ -218,6 +246,14 @@ function Store() {
                 <br />
                 Entregas em Cachoeira, São Félix, Capoeiruçu e Muritiba. Retirada no local sem taxa.
               </p>
+              <button
+                type="button"
+                onClick={() => setProfileOpen(true)}
+                className="mt-4 inline-flex rounded-full bg-brand px-4 py-2 text-xs font-semibold text-brand-foreground hover:brightness-110"
+              >
+                Ver perfil completo da loja
+              </button>
+              <br />
               <Link
                 to="/admin"
                 className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand"
@@ -231,6 +267,7 @@ function Store() {
       )}
 
       <BottomNav onOrders={() => setCartOpen(true)} />
+      <StoreProfileModal open={profileOpen} onOpenChange={setProfileOpen} />
       <CartModal open={cartOpen} onOpenChange={setCartOpen} />
     </div>
   );

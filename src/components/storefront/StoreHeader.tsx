@@ -1,5 +1,6 @@
 import { Search, Share2, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
 import { useHeroSettings } from "@/hooks/use-hero-settings";
 import { useBusinessHours, storeStatus, DEFAULT_BUSINESS_HOURS } from "@/hooks/use-business-hours";
@@ -22,10 +23,19 @@ export function StoreHeader({
   async function share() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     try {
-      if (navigator.share) await navigator.share({ title, url });
-      else await navigator.clipboard.writeText(url);
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title, text: `Confira o cardápio da ${title}!`, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copiado!");
     } catch {
-      /* cancelado */
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copiado!");
+      } catch {
+        toast.error("Não foi possível compartilhar o link");
+      }
     }
   }
 
