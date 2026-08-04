@@ -298,6 +298,16 @@ function ProductDialog({
             </Field>
           </div>
 
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm">
+            <input
+              type="checkbox"
+              checked={!!form.featured}
+              onChange={(e) => set("featured", e.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+            Exibir em "Os Mais Pedidos" (máx. 4 produtos no site)
+          </label>
+
           <Field label="Imagem">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
