@@ -47,12 +47,21 @@
 :root {
   --radius: 0.875rem;
 
-  /* Cream base */
-  --background: oklch(0.972 0.018 80);
-  --foreground: oklch(0.225 0.045 50);
+  /* Clean neutral base */
+  --background: oklch(0.98 0.003 285);
+  --foreground: oklch(0.22 0.01 285);
 
-  --card: oklch(0.985 0.012 85);
-  --card-foreground: oklch(0.225 0.045 50);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.01 285);
+
+  /* Vibrant brand magenta */
+  --brand: oklch(0.58 0.24 350);
+  --brand-foreground: oklch(0.99 0.005 350);
+
+  /* Dark info strip */
+  --ink: oklch(0.22 0.01 285);
+  --ink-foreground: oklch(0.97 0.003 285);
+
 
   --popover: oklch(0.985 0.012 85);
   --popover-foreground: oklch(0.225 0.045 50);
