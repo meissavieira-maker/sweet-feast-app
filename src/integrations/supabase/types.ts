@@ -32,6 +32,36 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          label: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          label: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -141,6 +171,7 @@ export type Database = {
           category: string
           created_at: string
           description: string
+          featured: boolean
           id: string
           image_url: string
           name: string
@@ -154,6 +185,7 @@ export type Database = {
           category: string
           created_at?: string
           description?: string
+          featured?: boolean
           id?: string
           image_url?: string
           name: string
@@ -167,6 +199,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string
+          featured?: boolean
           id?: string
           image_url?: string
           name?: string
