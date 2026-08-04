@@ -33,6 +33,10 @@
   --color-gold-foreground: var(--gold-foreground);
   --color-cherry: var(--cherry);
   --color-cherry-foreground: var(--cherry-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
