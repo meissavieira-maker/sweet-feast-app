@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { categories, type Product } from "@/lib/products";
+import { type Product } from "@/lib/products";
+import { useCategories } from "@/hooks/use-categories";
 import { formatBRL } from "@/lib/cart-context";
 import { toast } from "sonner";
 import {
@@ -19,13 +20,14 @@ const SIGNED_TTL = 60 * 60 * 24 * 365 * 5; // 5 anos
 export function AdminProducts() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Editing | null>(null);
+  const { data: categories = [] } = useCategories(true);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["admin-products"],
     queryFn: async (): Promise<Product[]> => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name,description,price,category,image_url,stock,badge")
+        .select("id,name,description,price,category,image_url,stock,badge,featured")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Product[];
@@ -53,7 +55,7 @@ export function AdminProducts() {
           <p className="text-sm text-muted-foreground">Cadastre, edite e controle o estoque.</p>
         </div>
         <button
-          onClick={() => setEditing({ category: categories[0].id, stock: 10, price: 0 })}
+          onClick={() => setEditing({ category: categories[0]?.slug ?? "", stock: 10, price: 0 })}
           className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110"
         >
           <Plus className="h-4 w-4" /> Novo produto
@@ -97,7 +99,7 @@ export function AdminProducts() {
                     </div>
                   </td>
                   <td className="p-3 capitalize text-muted-foreground">
-                    {categories.find((c) => c.id === p.category)?.label ?? p.category}
+                    {categories.find((c) => c.slug === p.category)?.label ?? p.category}
                   </td>
                   <td className="p-3">{formatBRL(p.price)}</td>
                   <td className="p-3">
@@ -138,6 +140,7 @@ export function AdminProducts() {
 
       {editing && (
         <ProductDialog
+          categories={categories}
           initial={editing}
           onClose={() => setEditing(null)}
           onSaved={() => {
@@ -153,10 +156,12 @@ export function AdminProducts() {
 
 function ProductDialog({
   initial,
+  categories,
   onClose,
   onSaved,
 }: {
   initial: Editing;
+  categories: { id: string; slug: string; label: string }[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -205,6 +210,7 @@ function ProductDialog({
         image_url: form.image_url ?? "",
         stock: Math.max(0, Math.trunc(Number(form.stock ?? 0))),
         badge: form.badge || null,
+        featured: !!form.featured,
       };
       if (form.id) {
         const { error } = await supabase.from("products").update(payload).eq("id", form.id);
@@ -271,12 +277,12 @@ function ProductDialog({
           <div className="grid grid-cols-2 gap-3">
             <Field label="Categoria">
               <select
-                value={form.category ?? categories[0].id}
+                value={form.category ?? categories[0]?.slug ?? ""}
                 onChange={(e) => set("category", e.target.value)}
                 className="input"
               >
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.slug}>
                     {c.label}
                   </option>
                 ))}
