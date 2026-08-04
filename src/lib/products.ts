@@ -3,8 +3,9 @@ export type Category = {
   label: string;
 };
 
+/** Fallback usado apenas se o banco ainda não tiver categorias. */
 export const categories: Category[] = [
-  { id: "fatias", label: "Fatias-Caseirinhos-Pudins" },
+  { id: "fatias", label: "Fatias" },
 ];
 
 export type Product = {
@@ -16,4 +17,5 @@ export type Product = {
   image_url: string;
   stock: number;
   badge?: string | null;
+  featured?: boolean;
 };
