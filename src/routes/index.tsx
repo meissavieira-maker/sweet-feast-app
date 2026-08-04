@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Settings } from "lucide-react";
 import { StoreHeader } from "@/components/storefront/StoreHeader";
@@ -9,9 +9,9 @@ import { ProductRow, ProductHighlightCard } from "@/components/storefront/Produc
 import { BottomNav } from "@/components/storefront/BottomNav";
 import { CartModal } from "@/components/storefront/CartModal";
 import { CartProvider } from "@/lib/cart-context";
-import { categories, type Product } from "@/lib/products";
+import type { Product } from "@/lib/products";
 import { supabase } from "@/integrations/supabase/client";
-import { useHeroSettings } from "@/hooks/use-hero-settings";
+import { useCategories } from "@/hooks/use-categories";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,23 +61,30 @@ const normalize = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
 function Store() {
-  const [activeCat, setActiveCat] = useState(categories[0].id);
   const [cartOpen, setCartOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const { data: hero } = useHeroSettings();
+  const [activeCat, setActiveCat] = useState("");
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  const { data: categories = [] } = useCategories();
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["storefront-products"],
     queryFn: async (): Promise<Product[]> => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name,description,price,category,image_url,stock,badge")
+        .select("id,name,description,price,category,image_url,stock,badge,featured")
         .eq("active", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Product[];
     },
   });
+
+  useEffect(() => {
+    if (!activeCat && categories.length > 0) setActiveCat(categories[0].slug);
+  }, [categories, activeCat]);
 
   const sorted = useMemo(() => {
     const rankOf = (name: string) => {
@@ -87,33 +94,51 @@ function Store() {
     return [...products].sort((a, b) => rankOf(a.name) - rankOf(b.name));
   }, [products]);
 
-  const visible = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = normalize(query);
+    if (!q) return sorted;
     return sorted.filter(
-      (p) =>
-        p.category === activeCat &&
-        (q === "" || normalize(p.name).includes(q) || normalize(p.description ?? "").includes(q)),
+      (p) => normalize(p.name).includes(q) || normalize(p.description ?? "").includes(q),
     );
-  }, [sorted, activeCat, query]);
+  }, [sorted, query]);
 
   const highlights = useMemo(
-    () => sorted.filter((p) => p.stock > 0).slice(0, 8),
+    () => sorted.filter((p) => p.featured && p.stock > 0).slice(0, 4),
     [sorted],
   );
 
-  const activeLabel = categories.find((c) => c.id === activeCat)?.label;
+  // Destaca a aba da seção visível durante o scroll
+  useEffect(() => {
+    function onScroll() {
+      const offset = (stickyRef.current?.offsetHeight ?? 0) + 24;
+      let current = activeCat;
+      for (const c of categories) {
+        const el = sectionRefs.current[c.slug];
+        if (el && el.getBoundingClientRect().top - offset <= 0) current = c.slug;
+      }
+      if (current && current !== activeCat) setActiveCat(current);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [categories, activeCat]);
+
+  function scrollToCategory(slug: string) {
+    setActiveCat(slug);
+    const el = sectionRefs.current[slug];
+    if (!el) return;
+    const offset = (stickyRef.current?.offsetHeight ?? 0) + 8;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: "smooth" });
+  }
 
   return (
     <div id="top" className="min-h-screen bg-background pb-32">
-      <StoreHeader query={query} onQueryChange={setQuery} />
-      <StoreInfoBar minOrder={20} />
-
-      <div className="mx-auto max-w-3xl px-4 pt-4">
-        <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-soft">
-          <p className="text-center text-xs font-semibold leading-snug text-foreground sm:text-sm">
-            {hero?.hero_notice ?? "Pedidos realizados para o dia 5 de julho. Entregas e Retiradas a partir das 10h."}
-          </p>
-        </div>
+      <div ref={stickyRef} className="sticky top-0 z-40 shadow-sm">
+        <StoreHeader query={query} onQueryChange={setQuery} />
+        <StoreInfoBar minOrder={20} />
+        {categories.length > 0 && (
+          <CategoryTabs categories={categories} active={activeCat} onSelect={scrollToCategory} />
+        )}
       </div>
 
       {isLoading ? (
@@ -125,7 +150,7 @@ function Store() {
           {highlights.length > 0 && !query && (
             <section className="mx-auto max-w-3xl px-4 pt-6">
               <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
-                Os mais pedidos
+                Os Mais Pedidos
               </h2>
               <div className="no-scrollbar -mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2">
                 {highlights.map((p) => (
@@ -135,43 +160,58 @@ function Store() {
             </section>
           )}
 
-          <div className="mt-4">
-            <CategoryTabs active={activeCat} onChange={setActiveCat} />
-          </div>
-
           <main className="mx-auto max-w-3xl px-4">
-            <section className="pt-6">
-              <div className="border-b border-border pb-2">
-                <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
-                  {activeLabel}
-                </h2>
-              </div>
+            {categories.map((c) => {
+              const items = filtered.filter((p) => p.category === c.slug);
+              if (query && items.length === 0) return null;
+              return (
+                <section
+                  key={c.id}
+                  id={`cat-${c.slug}`}
+                  ref={(el) => {
+                    sectionRefs.current[c.slug] = el;
+                  }}
+                  className="scroll-mt-40 pt-6"
+                >
+                  <div className="border-b border-border pb-2">
+                    <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
+                      {c.label}
+                    </h2>
+                  </div>
 
-              {visible.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border bg-card/50 p-10 text-center">
-                  <p className="text-sm font-semibold text-card-foreground">
-                    {query ? "Nenhum produto encontrado." : "Nenhum produto nesta categoria ainda."}
-                  </p>
-                  {!query && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Cadastre produtos no{" "}
-                      <Link to="/admin" className="text-brand underline-offset-4 hover:underline">
-                        Painel do Admin
-                      </Link>
-                      .
-                    </p>
+                  {items.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
+                      <p className="text-sm font-semibold text-card-foreground">
+                        Nenhum produto nesta categoria ainda.
+                      </p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Cadastre produtos no{" "}
+                        <Link to="/admin" className="text-brand underline-offset-4 hover:underline">
+                          Painel do Admin
+                        </Link>
+                        .
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {items.map((p) => (
+                        <ProductRow key={p.id} product={p} />
+                      ))}
+                    </div>
                   )}
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {visible.map((p) => (
-                    <ProductRow key={p.id} product={p} />
-                  ))}
-                </div>
-              )}
-            </section>
+                </section>
+              );
+            })}
 
-            <section id="perfil-da-loja" className="border-t border-border py-8">
+            {query && filtered.length === 0 && (
+              <div className="mt-6 rounded-xl border border-dashed border-border bg-card/50 p-10 text-center">
+                <p className="text-sm font-semibold text-card-foreground">
+                  Nenhum produto encontrado.
+                </p>
+              </div>
+            )}
+
+            <section id="perfil-da-loja" className="mt-4 border-t border-border py-8">
               <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground">Perfil da loja</h2>
               <p className="mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">
                 Meissa Vieira Confeitaria — Rua Rodrigo Brandão, 32, Cachoeira-BA.
