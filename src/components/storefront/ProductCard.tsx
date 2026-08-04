@@ -13,7 +13,7 @@ export function ProductRow({ product }: { product: Product }) {
       className="flex w-full items-start gap-4 py-4 text-left transition-opacity disabled:opacity-60"
     >
       <div className="min-w-0 flex-1">
-        <h3 className="truncate text-sm font-bold text-foreground sm:text-base">{product.name}</h3>
+        <h3 className="truncate font-sans text-sm font-bold text-foreground sm:text-base">{product.name}</h3>
         <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">
           {product.description}
         </p>

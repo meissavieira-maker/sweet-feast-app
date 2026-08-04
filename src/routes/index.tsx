@@ -124,7 +124,7 @@ function Store() {
         <>
           {highlights.length > 0 && !query && (
             <section className="mx-auto max-w-3xl px-4 pt-6">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
+              <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
                 Os mais pedidos
               </h2>
               <div className="no-scrollbar -mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2">
@@ -142,7 +142,7 @@ function Store() {
           <main className="mx-auto max-w-3xl px-4">
             <section className="pt-6">
               <div className="border-b border-border pb-2">
-                <h2 className="text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
+                <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
                   {activeLabel}
                 </h2>
               </div>
@@ -172,7 +172,7 @@ function Store() {
             </section>
 
             <section id="perfil-da-loja" className="border-t border-border py-8">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">Perfil da loja</h2>
+              <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground">Perfil da loja</h2>
               <p className="mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">
                 Meissa Vieira Confeitaria — Rua Rodrigo Brandão, 32, Cachoeira-BA.
                 <br />
