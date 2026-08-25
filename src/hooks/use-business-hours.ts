@@ -91,7 +91,7 @@ export function storeStatus(hours: BusinessHours, manualOpen: boolean) {
   const withinHours = openToday && minutes >= openMin && minutes < closeMin;
 
   if (!manualOpen) {
-    return { open: false, message: "Loja fechada no momento" };
+    return { open: false, message: "Loja Fechada no momento (Aberto a partir das 13h)" };
   }
   if (withinHours) {
     return { open: true, message: `Loja aberta agora — até ${fmtHour(hours.close)}` };
