@@ -266,7 +266,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       _address: fullAddress,
       _delivery_fee: deliveryFee,
       _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
-      _notes: null,
+      _notes: undefined,
     });
 
     if (error) {
@@ -332,7 +332,6 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       setPhone("");
       setAddress("");
       setCityId("");
-      setCalda("");
       setMethod("pix");
     }
     onOpenChange(v);
