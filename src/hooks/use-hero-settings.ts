@@ -17,7 +17,6 @@ export const DEFAULT_WHATSAPP_TEMPLATE = `🍰 *1º Festival de Fatias — Meiss
 📞 *WhatsApp:* {telefone}
 🛵 *Forma de Envio:* {modo}
 📍 *Endereço:* {endereco}
-🍫 *Calda escolhida:* {calda}
 
 🛒 *Fatias Reservadas:*
 {itens}
