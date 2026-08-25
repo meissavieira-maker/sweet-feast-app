@@ -14,12 +14,6 @@ import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
 import { useHeroSettings, DEFAULT_WHATSAPP_TEMPLATE } from "@/hooks/use-hero-settings";
 
-const CALDA_OPTIONS = [
-  { id: "chocolate", label: "Calda de Chocolate" },
-  { id: "ninho", label: "Calda de Ninho" },
-  { id: "sem", label: "Sem Calda" },
-] as const;
-type CaldaId = (typeof CALDA_OPTIONS)[number]["id"];
 
 const DELIVERY_CITIES = [
   { id: "cachoeira", label: "Cachoeira", fee: 7 },
@@ -45,7 +39,6 @@ type SuccessInfo = {
   address: string;
   items: CartItem[];
   total: number;
-  calda: string;
 };
 
 
@@ -102,7 +95,6 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [phone, setPhone] = useState("");
   const [cityId, setCityId] = useState<string>("");
   const [address, setAddress] = useState("");
-  const [calda, setCalda] = useState<CaldaId | "">("");
   const [submitting, setSubmitting] = useState(false);
   const [pix, setPix] = useState<PixInfo | null>(null);
   const [pending, setPending] = useState<SuccessInfo | null>(null);
@@ -259,7 +251,6 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         return;
       }
     }
-    const caldaLabel = "";
 
     setSubmitting(true);
     const fullAddress =
@@ -275,7 +266,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       _address: fullAddress,
       _delivery_fee: deliveryFee,
       _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
-      _notes: `Calda escolhida: ${caldaLabel}`,
+      _notes: null,
     });
 
     if (error) {
@@ -292,7 +283,6 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       address: fullAddress,
       items: snapshotItems,
       total: snapshotTotal,
-      calda: caldaLabel,
     };
 
 
@@ -811,7 +801,6 @@ function buildWhatsAppMessage(s: SuccessInfo, template: string) {
     endereco,
     itens: itensTxt,
     total: formatBRL(s.total),
-    calda: s.calda || "—",
   };
   return template.replace(/\{(\w+)\}/g, (_m, k: string) =>
     Object.prototype.hasOwnProperty.call(vars, k) ? vars[k] : `{${k}}`,
