@@ -315,7 +315,7 @@ export function AdminSettings() {
               <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{telefone}"}</code>
               <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{modo}"}</code>
               <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{endereco}"}</code>
-              <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{calda}"}</code>
+              
               <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{itens}"}</code>
               <code className="mx-1 rounded bg-secondary px-1 py-0.5 text-[10px]">{"{total}"}</code>
             </p>
