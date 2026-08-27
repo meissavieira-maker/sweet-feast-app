@@ -16,6 +16,40 @@ import {
 type Editing = Partial<Product> & { id?: string };
 
 const SIGNED_TTL = 60 * 60 * 24 * 365 * 5; // 5 anos
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 1600;
+const SUPPORTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+async function prepareProductImage(file: File): Promise<File> {
+  if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
+    throw new Error("Use uma imagem JPG, PNG ou WebP.");
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error("A imagem deve ter no máximo 10 MB.");
+  }
+
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Não foi possível preparar esta imagem.");
+    context.drawImage(bitmap, 0, 0, width, height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.86),
+    );
+    if (!blob) throw new Error("Não foi possível preparar esta imagem.");
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "produto";
+    return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
+  } finally {
+    bitmap.close();
+  }
+}
 
 export function AdminProducts() {
   const qc = useQueryClient();
@@ -176,11 +210,15 @@ function ProductDialog({
   async function handleUpload(file: File) {
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `products/${crypto.randomUUID()}.${ext}`;
+      const preparedFile = await prepareProductImage(file);
+      const path = `products/${crypto.randomUUID()}.jpg`;
       const { error: upErr } = await supabase.storage
         .from("product-images")
-        .upload(path, file, { cacheControl: "31536000", upsert: false });
+        .upload(path, preparedFile, {
+          cacheControl: "31536000",
+          contentType: "image/jpeg",
+          upsert: false,
+        });
       if (upErr) throw upErr;
       const { data: signed, error: sErr } = await supabase.storage
         .from("product-images")
@@ -189,7 +227,12 @@ function ProductDialog({
       set("image_url", signed.signedUrl);
       toast.success("Imagem enviada");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha no upload");
+      const message = e instanceof Error ? e.message : "Falha no upload";
+      toast.error(
+        message.toLowerCase().includes("row-level security")
+          ? "Sua sessão expirou. Entre novamente no painel e tente outra vez."
+          : message,
+      );
     } finally {
       setUploading(false);
     }
@@ -323,11 +366,12 @@ function ProductDialog({
                   {uploading ? "Enviando..." : "Enviar arquivo"}
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     className="hidden"
                     onChange={(e) => {
                       const f = e.target.files?.[0];
                       if (f) void handleUpload(f);
+                      e.currentTarget.value = "";
                     }}
                   />
                 </label>
