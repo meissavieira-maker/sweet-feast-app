@@ -41,6 +41,15 @@ export function StoreHeader({
 
   return (
     <header>
+      {/* Notice bar */}
+      <div className="bg-brand-deep text-brand-deep-foreground">
+        <div className="mx-auto flex max-w-3xl items-center justify-center px-4 py-2">
+          <p className="min-w-0 truncate text-center text-[11px] font-medium tracking-wide sm:text-xs sm:whitespace-normal">
+            📍 Entregamos em Cachoeira, São Félix, Muritiba e Capoeiruçu
+          </p>
+        </div>
+      </div>
+
       {/* Brand bar */}
       <div className="bg-brand text-brand-foreground">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3.5">
