@@ -93,7 +93,7 @@ export function storeStatus(hours: BusinessHours, manualOpen: boolean) {
   if (!manualOpen) {
     return {
       open: false,
-      message: "🔴 Loja Fechada no momento • Entregas de Terça a Sexta, das 13h às 18h",
+      message: "Loja Fechada no momento • Entregas de Terça a Sexta, das 13h às 18h",
     };
   }
   if (withinHours) {
