@@ -151,6 +151,7 @@ export function AdminSettings() {
       toast.error(error.message || "Falha ao atualizar status da loja");
       return;
     }
+    window.dispatchEvent(new Event("store-status-changed"));
     toast.success(next ? "Loja agora está ABERTA" : "Loja marcada como FECHADA");
   }
 
