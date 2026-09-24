@@ -96,6 +96,11 @@ export function storeStatus(hours: BusinessHours, manualOpen: boolean) {
       message: "Loja Fechada no momento • Entregas de Terça a Sexta, das 13h às 18h",
     };
   }
+  // O controle manual do painel tem prioridade sobre a agenda configurada.
+  // Assim, ao marcar a loja como aberta, o site libera pedidos imediatamente.
+  if (!withinHours) {
+    return { open: true, message: "Loja aberta agora" };
+  }
   if (withinHours) {
     return { open: true, message: `Loja aberta agora — até ${fmtHour(hours.close)}` };
   }

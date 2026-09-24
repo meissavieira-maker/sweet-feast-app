@@ -15,6 +15,10 @@ export function useStoreStatus() {
 
   useEffect(() => {
     void refresh();
+    const refreshStatus = () => void refresh();
+    const interval = window.setInterval(refreshStatus, 15_000);
+    window.addEventListener("focus", refreshStatus);
+    window.addEventListener("store-status-changed", refreshStatus);
     const ch = supabase
       .channel(`app_settings_store_open_${Math.random().toString(36).slice(2)}`)
       .on(
@@ -27,6 +31,9 @@ export function useStoreStatus() {
       )
       .subscribe();
     return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshStatus);
+      window.removeEventListener("store-status-changed", refreshStatus);
       void supabase.removeChannel(ch);
     };
   }, []);
