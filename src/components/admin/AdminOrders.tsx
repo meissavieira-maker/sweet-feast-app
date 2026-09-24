@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Bike, Store as StoreIcon, Plus } from "lucide-react";
+import { Loader2, Bike, Store as StoreIcon, Plus, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/cart-context";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 type OrderStatus = "pendente" | "preparando" | "saiu_entrega" | "concluido" | "cancelado";
@@ -49,6 +50,92 @@ function extractCalda(notes: string | null): string | null {
   if (!notes) return null;
   const match = notes.match(/Calda escolhida:\s*(.+)/i);
   return match ? match[1].trim() : null;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;",
+    };
+    return entities[character] ?? character;
+  });
+}
+
+function printOrder(order: Order) {
+  const printWindow = window.open("", "_blank", "width=480,height=720");
+  if (!printWindow) {
+    toast.error("Permita a abertura de janelas para reimprimir a comanda");
+    return;
+  }
+
+  const shortId = order.id.slice(0, 8).toUpperCase();
+  const date = new Date(order.created_at).toLocaleString("pt-BR");
+  const fulfillment = order.mode === "entrega" ? "Entrega" : "Retirada na loja";
+  const items = order.order_items
+    .map(
+      (item) => `
+        <tr>
+          <td>${item.quantity}x ${escapeHtml(item.product_name)}</td>
+          <td>${escapeHtml(formatBRL(item.unit_price * item.quantity))}</td>
+        </tr>`,
+    )
+    .join("");
+  const notes = order.notes?.trim()
+    ? `<section><strong>Observações</strong><p>${escapeHtml(order.notes.trim()).replace(/\n/g, "<br>")}</p></section>`
+    : "";
+
+  printWindow.document.write(`<!doctype html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="utf-8">
+        <title>Comanda #${shortId}</title>
+        <style>
+          * { box-sizing: border-box; }
+          body { width: 80mm; margin: 0 auto; padding: 8mm 5mm; color: #111; font: 13px/1.4 Arial, sans-serif; }
+          h1 { margin: 0; text-align: center; font-size: 19px; }
+          .subtitle { margin: 2px 0 14px; text-align: center; font-size: 11px; }
+          section { padding: 9px 0; border-top: 1px dashed #555; }
+          p { margin: 3px 0 0; }
+          table { width: 100%; border-collapse: collapse; }
+          td { padding: 5px 0; vertical-align: top; }
+          td:last-child { width: 30%; text-align: right; white-space: nowrap; }
+          .summary { margin-left: auto; width: 78%; }
+          .summary div { display: flex; justify-content: space-between; padding: 2px 0; }
+          .total { margin-top: 5px; padding-top: 5px !important; border-top: 1px solid #111; font-size: 16px; font-weight: 700; }
+          .footer { border-top: 1px dashed #555; padding-top: 10px; text-align: center; font-size: 10px; }
+          @page { size: 80mm auto; margin: 0; }
+          @media print { body { width: 100%; } }
+        </style>
+      </head>
+      <body>
+        <h1>Meissa Vieira Confeitaria</h1>
+        <p class="subtitle">COMANDA #${shortId}<br>${escapeHtml(date)}</p>
+        <section>
+          <strong>Cliente</strong>
+          <p>${escapeHtml(order.customer_name)}${order.customer_phone ? `<br>${escapeHtml(order.customer_phone)}` : ""}</p>
+        </section>
+        <section>
+          <strong>${fulfillment}</strong>
+          ${order.address ? `<p>${escapeHtml(order.address)}</p>` : ""}
+        </section>
+        <section>
+          <table><tbody>${items}</tbody></table>
+        </section>
+        ${notes}
+        <section class="summary">
+          <div><span>Subtotal</span><span>${escapeHtml(formatBRL(order.subtotal))}</span></div>
+          <div><span>Taxa de entrega</span><span>${escapeHtml(formatBRL(order.delivery_fee))}</span></div>
+          <div class="total"><span>Total</span><span>${escapeHtml(formatBRL(order.total))}</span></div>
+        </section>
+        <p class="footer">Status: ${escapeHtml(STATUS_LABEL[order.status])}</p>
+        <script>window.addEventListener('load', () => { window.print(); });<\/script>
+      </body>
+    </html>`);
+  printWindow.document.close();
 }
 
 export function AdminOrders() {
@@ -131,19 +218,32 @@ export function AdminOrders() {
                     {o.mode === "entrega" ? `Entrega: ${o.address ?? "—"}` : "Retirada na loja"}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="flex flex-col items-end">
                   <div className="font-display text-xl text-primary">{formatBRL(o.total)}</div>
-                  <select
-                    value={o.status}
-                    onChange={(e) => setStatus(o.id, e.target.value as OrderStatus)}
-                    className="mt-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary"
-                  >
-                    {Object.entries(STATUS_LABEL).map(([v, l]) => (
-                      <option key={v} value={v}>
-                        {l}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mt-2 flex flex-wrap justify-end gap-2">
+                    <select
+                      value={o.status}
+                      onChange={(e) => setStatus(o.id, e.target.value as OrderStatus)}
+                      className="h-8 rounded-md border border-border bg-background px-3 text-xs outline-none focus:border-primary"
+                      aria-label={`Status do pedido de ${o.customer_name}`}
+                    >
+                      {Object.entries(STATUS_LABEL).map(([v, l]) => (
+                        <option key={v} value={v}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => printOrder(o)}
+                      title="Abrir a comanda para impressão"
+                    >
+                      <Printer />
+                      Reimprimir comanda
+                    </Button>
+                  </div>
                 </div>
               </div>
 
