@@ -47,6 +47,7 @@ export function OrderSoundAlert() {
     if (!enabled) return;
     let cancelled = false;
     let checking = false;
+    let initialized = false;
     const seen = new Set<string>();
     let channel: ReturnType<typeof supabase.channel> | undefined;
 
@@ -58,7 +59,7 @@ export function OrderSoundAlert() {
       toast.info("Novo pedido recebido!", { duration: 7000 });
     }
 
-    async function checkOrders(initial = false) {
+    async function checkOrders() {
       if (checking) return;
       checking = true;
       const { data, error } = await supabase
@@ -68,11 +69,9 @@ export function OrderSoundAlert() {
         .limit(100);
       checking = false;
       if (cancelled) return;
-      if (error) {
-        if (initial) toast.error("Não foi possível acompanhar novos pedidos.");
-        return;
-      }
-      if (initial) {
+      if (error) return;
+      if (!initialized) {
+        initialized = true;
         for (const order of data ?? []) seen.add(order.id);
       } else {
         // Oldest first so simultaneous orders are announced in arrival order.
@@ -81,7 +80,7 @@ export function OrderSoundAlert() {
     }
 
     async function start() {
-      await checkOrders(true); // Existing orders must never ring when the alert is switched on.
+      await checkOrders(); // Existing orders must never ring when the alert is switched on.
       if (cancelled) return;
       channel = supabase
         .channel("new-orders-sound")
