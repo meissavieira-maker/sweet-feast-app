@@ -1,0 +1,1 @@
+- Keep new-order sound alerts in an admin-only mounted control, with a user gesture to unlock browser audio and realtime plus polling deduplication; browsers block unsolicited sound and realtime messages can be missed.

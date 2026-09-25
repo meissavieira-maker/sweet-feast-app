@@ -8,6 +8,7 @@ import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminOrders } from "@/components/admin/AdminOrders";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { AdminCategories } from "@/components/admin/AdminCategories";
+import { OrderSoundAlert } from "@/components/admin/OrderSoundAlert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/admin")({
@@ -74,7 +75,7 @@ function AdminPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <TopBar email={session.user.email} onLogout={async () => { await supabase.auth.signOut(); }} />
+      <TopBar email={session.user.email} onLogout={async () => { await supabase.auth.signOut(); }} soundAlert />
       <main className="mx-auto max-w-6xl px-5 py-8">
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
           <TabsList className="bg-secondary">
@@ -109,7 +110,7 @@ function AdminPage() {
   );
 }
 
-function TopBar({ email, onLogout }: { email?: string | null; onLogout?: () => void }) {
+function TopBar({ email, onLogout, soundAlert = false }: { email?: string | null; onLogout?: () => void; soundAlert?: boolean }) {
   return (
     <header className="border-b border-border bg-card/60 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-3">
@@ -125,6 +126,7 @@ function TopBar({ email, onLogout }: { email?: string | null; onLogout?: () => v
         </div>
         {email && (
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            {soundAlert && <OrderSoundAlert />}
             <span className="hidden sm:inline">{email}</span>
             <button
               onClick={onLogout}
