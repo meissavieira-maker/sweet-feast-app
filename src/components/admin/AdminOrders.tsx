@@ -95,22 +95,21 @@ function printOrder(order: Order, existingWindow?: Window | null) {
         <title>Comanda #${shortId}</title>
         <style>
           * { box-sizing: border-box; }
-          html, body { margin: 0; }
-          body { width: 58mm; min-height: 200mm; margin: 0 auto; padding: 3mm; color: #111; font: 10px/1.25 Arial, sans-serif; overflow-wrap: anywhere; }
-          h1 { margin: 0; text-align: center; font-size: 14px; }
-          .subtitle { margin: 1mm 0 3mm; text-align: center; font-size: 9px; }
-          section { padding: 2mm 0; border-top: 1px dashed #555; }
-          p { margin: 1mm 0 0; }
+          body { width: 80mm; margin: 0 auto; padding: 8mm 5mm; color: #111; font: 13px/1.4 Arial, sans-serif; }
+          h1 { margin: 0; text-align: center; font-size: 19px; }
+          .subtitle { margin: 2px 0 14px; text-align: center; font-size: 11px; }
+          section { padding: 9px 0; border-top: 1px dashed #555; }
+          p { margin: 3px 0 0; }
           table { width: 100%; border-collapse: collapse; }
-          td { padding: 1mm 0; vertical-align: top; }
-          td:first-child { padding-right: 2mm; }
-          td:last-child { width: 34%; text-align: right; white-space: nowrap; }
-          .summary { margin-left: auto; width: 100%; }
-          .summary div { display: flex; justify-content: space-between; gap: 2mm; padding: .5mm 0; }
-          .total { margin-top: 1mm; padding-top: 1mm !important; border-top: 1px solid #111; font-size: 13px; font-weight: 700; }
-          .footer { border-top: 1px dashed #555; padding-top: 2mm; text-align: center; font-size: 8px; }
-          @page { size: 58mm 200mm; margin: 0; }
-          @media print { html, body { width: 58mm; min-height: 0; } }
+          td { padding: 5px 0; vertical-align: top; }
+          td:last-child { width: 30%; text-align: right; white-space: nowrap; }
+          .summary { margin-left: auto; width: 78%; }
+          .summary div { display: flex; justify-content: space-between; padding: 2px 0; }
+          .total { margin-top: 5px; padding-top: 5px !important; border-top: 1px solid #111; font-size: 16px; font-weight: 700; }
+          .footer { border-top: 1px dashed #555; padding-top: 10px; text-align: center; font-size: 10px; }
+          .thanks { margin-top: 12px; text-align: center; font-size: 12px; font-weight: 700; }
+          @page { size: 80mm auto; margin: 0; }
+          @media print { body { width: 100%; } }
         </style>
       </head>
       <body>
@@ -134,6 +133,7 @@ function printOrder(order: Order, existingWindow?: Window | null) {
           <div class="total"><span>Total</span><span>${escapeHtml(formatBRL(order.total))}</span></div>
         </section>
         <p class="footer">Status: ${escapeHtml(STATUS_LABEL[order.status])}</p>
+        <p class="thanks">Muito obrigada pela preferência!</p>
         <script>window.addEventListener('load', () => { window.print(); });<\/script>
       </body>
     </html>`);
