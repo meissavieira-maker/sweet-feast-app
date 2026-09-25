@@ -25,6 +25,8 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:title", content: "Meissa Vieira Confeitaria" },
       { property: "og:description", content: "Doces artesanais entregues na sua porta em até 60 minutos." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,
