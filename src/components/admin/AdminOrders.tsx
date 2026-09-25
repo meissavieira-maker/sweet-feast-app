@@ -95,7 +95,7 @@ function printOrder(order: Order, existingWindow?: Window | null) {
         <title>Comanda #${shortId}</title>
         <style>
           * { box-sizing: border-box; }
-          body { width: 80mm; margin: 0 auto; padding: 8mm 5mm; color: #111; font: 13px/1.4 Arial, sans-serif; }
+          body { width: 75mm; margin: 0 auto; padding: 8mm 5mm; color: #111; font: 13px/1.4 Arial, sans-serif; }
           h1 { margin: 0; text-align: center; font-size: 19px; }
           .subtitle { margin: 2px 0 14px; text-align: center; font-size: 11px; }
           section { padding: 9px 0; border-top: 1px dashed #555; }
@@ -108,7 +108,7 @@ function printOrder(order: Order, existingWindow?: Window | null) {
           .total { margin-top: 5px; padding-top: 5px !important; border-top: 1px solid #111; font-size: 16px; font-weight: 700; }
           .footer { border-top: 1px dashed #555; padding-top: 10px; text-align: center; font-size: 10px; }
           .thanks { margin-top: 12px; text-align: center; font-size: 12px; font-weight: 700; }
-          @page { size: 80mm auto; margin: 0; }
+          @page { size: 75mm auto; margin: 0; }
           @media print { body { width: 100%; } }
         </style>
       </head>
