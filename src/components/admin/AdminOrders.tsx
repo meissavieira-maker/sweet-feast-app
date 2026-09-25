@@ -106,9 +106,10 @@ function printOrder(order: Order, existingWindow?: Window | null) {
           p { margin: 3px 0 0; }
           table { width: 100%; border-collapse: collapse; }
           td { padding: 5px 0; vertical-align: top; }
-          td:last-child { width: 30%; text-align: right; white-space: nowrap; }
+          td:last-child { width: 30%; padding-right: 2mm; text-align: right; white-space: nowrap; }
           .summary { margin-left: 0; width: 100%; }
           .summary div { display: flex; justify-content: space-between; padding: 2px 0; }
+          .summary div span:last-child { padding-right: 2mm; text-align: right; white-space: nowrap; }
           .total { margin-top: 5px; padding-top: 5px !important; border-top: 1px solid #111; font-size: 16px; font-weight: 700; }
           .footer { border-top: 1px dashed #555; padding-top: 10px; text-align: center; font-size: 10px; }
           .thanks { margin-top: 12px; text-align: center; font-size: 12px; font-weight: 700; }
