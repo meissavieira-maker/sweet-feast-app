@@ -65,6 +65,10 @@ function escapeHtml(value: string): string {
   });
 }
 
+function formatAddress(address: string): string {
+  return escapeHtml(address).replace(/,\s*(Número\b)/i, ",<br>$1");
+}
+
 function printOrder(order: Order, existingWindow?: Window | null) {
   const printWindow = existingWindow ?? window.open("", "_blank", "width=360,height=760");
   if (!printWindow) {
@@ -103,7 +107,7 @@ function printOrder(order: Order, existingWindow?: Window | null) {
           table { width: 100%; border-collapse: collapse; }
           td { padding: 5px 0; vertical-align: top; }
           td:last-child { width: 30%; text-align: right; white-space: nowrap; }
-          .summary { margin-left: auto; width: 78%; }
+          .summary { margin-left: 0; width: 100%; }
           .summary div { display: flex; justify-content: space-between; padding: 2px 0; }
           .total { margin-top: 5px; padding-top: 5px !important; border-top: 1px solid #111; font-size: 16px; font-weight: 700; }
           .footer { border-top: 1px dashed #555; padding-top: 10px; text-align: center; font-size: 10px; }
@@ -121,7 +125,7 @@ function printOrder(order: Order, existingWindow?: Window | null) {
         </section>
         <section>
           <strong>${fulfillment}</strong>
-          ${order.address ? `<p>${escapeHtml(order.address)}</p>` : ""}
+          ${order.address ? `<p>${formatAddress(order.address)}</p>` : ""}
         </section>
         <section>
           <table><tbody>${items}</tbody></table>
