@@ -65,8 +65,8 @@ function escapeHtml(value: string): string {
   });
 }
 
-function printOrder(order: Order) {
-  const printWindow = window.open("", "_blank", "width=480,height=720");
+function printOrder(order: Order, existingWindow?: Window | null) {
+  const printWindow = existingWindow ?? window.open("", "_blank", "width=360,height=760");
   if (!printWindow) {
     toast.error("Permita a abertura de janelas para reimprimir a comanda");
     return;
@@ -95,20 +95,22 @@ function printOrder(order: Order) {
         <title>Comanda #${shortId}</title>
         <style>
           * { box-sizing: border-box; }
-          body { width: 80mm; margin: 0 auto; padding: 8mm 5mm; color: #111; font: 13px/1.4 Arial, sans-serif; }
-          h1 { margin: 0; text-align: center; font-size: 19px; }
-          .subtitle { margin: 2px 0 14px; text-align: center; font-size: 11px; }
-          section { padding: 9px 0; border-top: 1px dashed #555; }
-          p { margin: 3px 0 0; }
+          html, body { margin: 0; }
+          body { width: 58mm; min-height: 200mm; margin: 0 auto; padding: 3mm; color: #111; font: 10px/1.25 Arial, sans-serif; overflow-wrap: anywhere; }
+          h1 { margin: 0; text-align: center; font-size: 14px; }
+          .subtitle { margin: 1mm 0 3mm; text-align: center; font-size: 9px; }
+          section { padding: 2mm 0; border-top: 1px dashed #555; }
+          p { margin: 1mm 0 0; }
           table { width: 100%; border-collapse: collapse; }
-          td { padding: 5px 0; vertical-align: top; }
-          td:last-child { width: 30%; text-align: right; white-space: nowrap; }
-          .summary { margin-left: auto; width: 78%; }
-          .summary div { display: flex; justify-content: space-between; padding: 2px 0; }
-          .total { margin-top: 5px; padding-top: 5px !important; border-top: 1px solid #111; font-size: 16px; font-weight: 700; }
-          .footer { border-top: 1px dashed #555; padding-top: 10px; text-align: center; font-size: 10px; }
-          @page { size: 80mm auto; margin: 0; }
-          @media print { body { width: 100%; } }
+          td { padding: 1mm 0; vertical-align: top; }
+          td:first-child { padding-right: 2mm; }
+          td:last-child { width: 34%; text-align: right; white-space: nowrap; }
+          .summary { margin-left: auto; width: 100%; }
+          .summary div { display: flex; justify-content: space-between; gap: 2mm; padding: .5mm 0; }
+          .total { margin-top: 1mm; padding-top: 1mm !important; border-top: 1px solid #111; font-size: 13px; font-weight: 700; }
+          .footer { border-top: 1px dashed #555; padding-top: 2mm; text-align: center; font-size: 8px; }
+          @page { size: 58mm 200mm; margin: 0; }
+          @media print { html, body { width: 58mm; min-height: 0; } }
         </style>
       </head>
       <body>
@@ -172,10 +174,23 @@ export function AdminOrders() {
     };
   }, [qc]);
 
-  async function setStatus(id: string, status: OrderStatus) {
-    const { error } = await supabase.from("orders").update({ status }).eq("id", id);
-    if (error) toast.error(error.message);
-    else toast.success("Status atualizado");
+  async function setStatus(order: Order, status: OrderStatus) {
+    const shouldPrint = order.status === "pendente" && status === "preparando";
+    const printWindow = shouldPrint ? window.open("", "_blank", "width=360,height=760") : null;
+
+    if (shouldPrint && !printWindow) {
+      toast.error("Permita a abertura de janelas para imprimir a comanda automaticamente");
+    }
+
+    const { error } = await supabase.from("orders").update({ status }).eq("id", order.id);
+    if (error) {
+      printWindow?.close();
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success("Status atualizado");
+    if (shouldPrint && printWindow) printOrder({ ...order, status }, printWindow);
   }
 
   return (
@@ -223,7 +238,7 @@ export function AdminOrders() {
                   <div className="mt-2 flex flex-wrap justify-end gap-2">
                     <select
                       value={o.status}
-                      onChange={(e) => setStatus(o.id, e.target.value as OrderStatus)}
+                       onChange={(e) => setStatus(o, e.target.value as OrderStatus)}
                       className="h-8 rounded-md border border-border bg-background px-3 text-xs outline-none focus:border-primary"
                       aria-label={`Status do pedido de ${o.customer_name}`}
                     >

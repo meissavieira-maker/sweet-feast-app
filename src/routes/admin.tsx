@@ -14,6 +14,11 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "Painel do Admin — Meissa Vieira Confeitaria" },
+      { name: "description", content: "Gerenciamento de produtos, pedidos e configurações da Meissa Vieira Confeitaria." },
+      { property: "og:title", content: "Painel do Admin — Meissa Vieira Confeitaria" },
+      { property: "og:description", content: "Gerenciamento da Meissa Vieira Confeitaria." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
