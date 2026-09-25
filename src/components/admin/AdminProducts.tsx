@@ -29,10 +29,11 @@ async function prepareProductImage(file: File): Promise<File> {
 
   // createImageBitmap is not available for every image format or browser (notably iOS).
   // The image element can decode formats the device supports, including HEIC on Safari.
-  let source: ImageBitmap | HTMLImageElement;
+  let source: ImageBitmap | HTMLImageElement | undefined;
   let objectUrl: string | undefined;
   try {
     try {
+      if (typeof createImageBitmap !== "function") throw new Error("Use o leitor de imagens do aparelho");
       source = await createImageBitmap(file);
     } catch {
       objectUrl = URL.createObjectURL(file);
@@ -44,8 +45,10 @@ async function prepareProductImage(file: File): Promise<File> {
         throw new Error("Não foi possível abrir essa foto. Tente uma imagem JPG, PNG ou WebP.");
       }
     }
-    const sourceWidth = source instanceof ImageBitmap ? source.width : source.naturalWidth;
-    const sourceHeight = source instanceof ImageBitmap ? source.height : source.naturalHeight;
+    if (!source) throw new Error("Não foi possível abrir essa foto.");
+    const isBitmap = typeof ImageBitmap !== "undefined" && source instanceof ImageBitmap;
+    const sourceWidth = isBitmap ? source.width : (source as HTMLImageElement).naturalWidth;
+    const sourceHeight = isBitmap ? source.height : (source as HTMLImageElement).naturalHeight;
     if (!sourceWidth || !sourceHeight) throw new Error("A foto selecionada está vazia ou danificada.");
     const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(sourceWidth, sourceHeight));
     const width = Math.max(1, Math.round(sourceWidth * scale));
@@ -64,7 +67,7 @@ async function prepareProductImage(file: File): Promise<File> {
     const baseName = file.name.replace(/\.[^.]+$/, "") || "produto";
     return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
   } finally {
-    if (source instanceof ImageBitmap) source.close();
+    if (typeof ImageBitmap !== "undefined" && source instanceof ImageBitmap) source.close();
     if (objectUrl) URL.revokeObjectURL(objectUrl);
   }
 }
