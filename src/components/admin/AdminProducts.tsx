@@ -16,29 +16,46 @@ import {
 type Editing = Partial<Product> & { id?: string };
 
 const SIGNED_TTL = 60 * 60 * 24 * 365 * 5; // 5 anos
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 const MAX_IMAGE_DIMENSION = 1600;
-const SUPPORTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 async function prepareProductImage(file: File): Promise<File> {
-  if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
-    throw new Error("Use uma imagem JPG, PNG ou WebP.");
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Selecione uma foto do seu aparelho.");
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error("A imagem deve ter no máximo 10 MB.");
+    throw new Error("A imagem deve ter no máximo 20 MB.");
   }
 
-  const bitmap = await createImageBitmap(file);
+  // createImageBitmap is not available for every image format or browser (notably iOS).
+  // The image element can decode formats the device supports, including HEIC on Safari.
+  let source: ImageBitmap | HTMLImageElement;
+  let objectUrl: string | undefined;
   try {
-    const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height));
-    const width = Math.max(1, Math.round(bitmap.width * scale));
-    const height = Math.max(1, Math.round(bitmap.height * scale));
+    try {
+      source = await createImageBitmap(file);
+    } catch {
+      objectUrl = URL.createObjectURL(file);
+      source = new Image();
+      source.src = objectUrl;
+      try {
+        await source.decode();
+      } catch {
+        throw new Error("Não foi possível abrir essa foto. Tente uma imagem JPG, PNG ou WebP.");
+      }
+    }
+    const sourceWidth = source instanceof ImageBitmap ? source.width : source.naturalWidth;
+    const sourceHeight = source instanceof ImageBitmap ? source.height : source.naturalHeight;
+    if (!sourceWidth || !sourceHeight) throw new Error("A foto selecionada está vazia ou danificada.");
+    const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(sourceWidth, sourceHeight));
+    const width = Math.max(1, Math.round(sourceWidth * scale));
+    const height = Math.max(1, Math.round(sourceHeight * scale));
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Não foi possível preparar esta imagem.");
-    context.drawImage(bitmap, 0, 0, width, height);
+    context.drawImage(source, 0, 0, width, height);
 
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, "image/jpeg", 0.86),
@@ -47,7 +64,8 @@ async function prepareProductImage(file: File): Promise<File> {
     const baseName = file.name.replace(/\.[^.]+$/, "") || "produto";
     return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
   } finally {
-    bitmap.close();
+    if (source instanceof ImageBitmap) source.close();
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
   }
 }
 
@@ -366,7 +384,7 @@ function ProductDialog({
                   {uploading ? "Enviando..." : "Enviar arquivo"}
                   <input
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/*"
                     className="hidden"
                     onChange={(e) => {
                       const f = e.target.files?.[0];
