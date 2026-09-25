@@ -10,7 +10,7 @@ function playOrderChime(context: AudioContext) {
   const start = context.currentTime + 0.02;
   // An original three-note notification chime, repeated for seven seconds.
   for (let pulse = 0; pulse < 7; pulse++) {
-    for (const [offset, frequency] of [[0, 659], [0.18, 784], [0.38, 988]]) {
+    for (const [offset, frequency] of [[0, 659], [0.18, 784], [0.78, 988]]) {
       const at = start + pulse + offset;
       if (at >= start + ALERT_DURATION) continue;
       const oscillator = context.createOscillator();
