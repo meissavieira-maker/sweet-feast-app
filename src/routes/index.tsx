@@ -216,7 +216,11 @@ function Store() {
                       </p>
                       <p className="mt-2 text-xs text-muted-foreground">
                         Cadastre produtos no{" "}
-                        <Link to="/admin" search={{}} className="text-brand underline-offset-4 hover:underline">
+                        <Link
+                          to="/admin"
+                          search={{ tab: "produtos", from: shiftDateForAdmin(-6), to: dateForAdmin() }}
+                          className="text-brand underline-offset-4 hover:underline"
+                        >
                           Painel do Admin
                         </Link>
                         .
@@ -258,7 +262,7 @@ function Store() {
               <br />
               <Link
                 to="/admin"
-                search={{}}
+                search={{ tab: "produtos", from: shiftDateForAdmin(-6), to: dateForAdmin() }}
                 className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand"
               >
                 <Settings className="h-3.5 w-3.5" />
@@ -274,4 +278,24 @@ function Store() {
       <CartModal open={cartOpen} onOpenChange={setCartOpen} />
     </div>
   );
+}
+
+function dateForAdmin() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bahia",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function shiftDateForAdmin(days: number) {
+  const date = new Date(`${dateForAdmin()}T12:00:00-03:00`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bahia",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
 }
