@@ -8,30 +8,38 @@ const ALERT_DURATION = 7;
 
 function playOrderChime(context: AudioContext) {
   const start = context.currentTime + 0.02;
-  // A bright, original four-note alert with a controlled peak level.
+  // An original, urgent three-burst ring inspired by classic telephone bells.
   const compressor = context.createDynamicsCompressor();
-  compressor.threshold.value = -16;
-  compressor.knee.value = 6;
-  compressor.ratio.value = 4;
-  compressor.attack.value = 0.003;
-  compressor.release.value = 0.2;
+  compressor.threshold.value = -20;
+  compressor.knee.value = 4;
+  compressor.ratio.value = 7;
+  compressor.attack.value = 0.002;
+  compressor.release.value = 0.14;
   compressor.connect(context.destination);
-  let remaining = 28;
-  for (let pulse = 0; pulse < 7; pulse++) {
-    for (const [offset, frequency] of [[0, 784], [0.2, 1047], [0.4, 1319], [0.65, 1047]]) {
-      const at = start + pulse + offset;
-      if (at >= start + ALERT_DURATION) continue;
+  const rings = [0, 2.15, 4.3];
+  const frequencies = [760, 980];
+  let remaining = rings.length * frequencies.length;
+
+  for (const ringOffset of rings) {
+    for (const frequency of frequencies) {
+      const at = start + ringOffset;
+      const end = at + 1.45;
       const oscillator = context.createOscillator();
       const gain = context.createGain();
-      oscillator.type = "triangle";
+      oscillator.type = frequency === frequencies[0] ? "square" : "sawtooth";
       oscillator.frequency.value = frequency;
       gain.gain.setValueAtTime(0.0001, at);
-      gain.gain.exponentialRampToValueAtTime(0.42, at + 0.012);
-      gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.18);
+      for (let pulse = 0; pulse < 16; pulse++) {
+        const pulseStart = at + pulse * 0.09;
+        gain.gain.setValueAtTime(0.0001, pulseStart);
+        gain.gain.exponentialRampToValueAtTime(0.34, pulseStart + 0.012);
+        gain.gain.setValueAtTime(0.34, pulseStart + 0.055);
+        gain.gain.exponentialRampToValueAtTime(0.0001, Math.min(pulseStart + 0.085, end));
+      }
       oscillator.connect(gain);
       gain.connect(compressor);
       oscillator.start(at);
-      oscillator.stop(at + 0.19);
+      oscillator.stop(end);
       oscillator.onended = () => {
         oscillator.disconnect();
         gain.disconnect();
