@@ -1,6 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Loader2, LogOut, Package, ShoppingBag, ArrowLeft, Settings, LayoutList } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Loader2, LogOut, Package, ShoppingBag, ArrowLeft, Settings, LayoutList, ChartNoAxesCombined } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { AdminAuth } from "@/components/admin/AdminAuth";
@@ -8,10 +7,20 @@ import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminOrders } from "@/components/admin/AdminOrders";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { AdminCategories } from "@/components/admin/AdminCategories";
+import { AdminPDV, bahiaDateString, shiftDate } from "@/components/admin/AdminPDV";
 import { OrderSoundAlert } from "@/components/admin/OrderSoundAlert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/admin")({
+  validateSearch: (search: Record<string, unknown>) => {
+    const allowedTabs = ["produtos", "categorias", "pedidos", "config", "pdv"] as const;
+    const tab = allowedTabs.find((value) => value === search.tab) ?? "produtos";
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+    const today = bahiaDateString();
+    const from = typeof search.from === "string" && datePattern.test(search.from) ? search.from : shiftDate(today, -6);
+    const to = typeof search.to === "string" && datePattern.test(search.to) ? search.to : today;
+    return { tab, from: from <= to ? from : to, to: to >= from ? to : from };
+  },
   head: () => ({
     meta: [
       { title: "Painel do Admin — Meissa Vieira Confeitaria" },
@@ -29,7 +38,8 @@ export const Route = createFileRoute("/admin")({
 
 function AdminPage() {
   const { loading, session, isAdmin, refresh } = useAdminAuth();
-  const [tab, setTab] = useState<"produtos" | "categorias" | "pedidos" | "config">("produtos");
+  const { tab, from, to } = Route.useSearch();
+  const navigate = useNavigate({ from: "/admin" });
 
   if (loading) {
     return (
@@ -57,17 +67,17 @@ function AdminPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Sua conta ainda não tem permissão de administrador.
           </p>
-          <button
+          <Button
             onClick={async () => {
               const { data, error } = await supabase.rpc("claim_first_admin");
               if (error) return alert(error.message);
               if (data === true) await refresh();
               else alert("Já existe um admin. Peça acesso a quem administra o sistema.");
             }}
-            className="mt-5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+            className="mt-5"
           >
             Tentar virar primeiro admin
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -77,8 +87,9 @@ function AdminPage() {
     <div className="min-h-screen bg-background">
       <TopBar email={session.user.email} onLogout={async () => { await supabase.auth.signOut(); }} soundAlert />
       <main className="mx-auto max-w-6xl px-5 py-8">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-          <TabsList className="bg-secondary">
+        <Tabs value={tab} onValueChange={(value) => void navigate({ search: (previous) => ({ ...previous, tab: value as typeof tab }), replace: true })}>
+          <div className="no-scrollbar overflow-x-auto">
+          <TabsList className="w-max bg-secondary">
             <TabsTrigger value="produtos" className="gap-1.5">
               <Package className="h-4 w-4" /> Produtos
             </TabsTrigger>
@@ -91,7 +102,11 @@ function AdminPage() {
             <TabsTrigger value="config" className="gap-1.5">
               <Settings className="h-4 w-4" /> Configurações
             </TabsTrigger>
+            <TabsTrigger value="pdv" className="gap-1.5">
+              <ChartNoAxesCombined className="h-4 w-4" /> PDV
+            </TabsTrigger>
           </TabsList>
+          </div>
           <TabsContent value="produtos" className="mt-6">
             <AdminProducts />
           </TabsContent>
@@ -103,6 +118,13 @@ function AdminPage() {
           </TabsContent>
           <TabsContent value="config" className="mt-6">
             <AdminSettings />
+          </TabsContent>
+          <TabsContent value="pdv" className="mt-6">
+            <AdminPDV
+              from={from}
+              to={to}
+              onRangeChange={(range) => void navigate({ search: (previous) => ({ ...previous, tab: "pdv", ...range }), replace: true })}
+            />
           </TabsContent>
         </Tabs>
       </main>
@@ -128,12 +150,14 @@ function TopBar({ email, onLogout, soundAlert = false }: { email?: string | null
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             {soundAlert && <OrderSoundAlert />}
             <span className="hidden sm:inline">{email}</span>
-            <button
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={onLogout}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 hover:text-primary"
             >
               <LogOut className="h-3.5 w-3.5" /> Sair
-            </button>
+            </Button>
           </div>
         )}
       </div>
