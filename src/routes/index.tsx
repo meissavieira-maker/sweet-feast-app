@@ -216,7 +216,7 @@ function Store() {
                       </p>
                       <p className="mt-2 text-xs text-muted-foreground">
                         Cadastre produtos no{" "}
-                        <Link to="/admin" className="text-brand underline-offset-4 hover:underline">
+                        <Link to="/admin" search={{}} className="text-brand underline-offset-4 hover:underline">
                           Painel do Admin
                         </Link>
                         .
@@ -258,6 +258,7 @@ function Store() {
               <br />
               <Link
                 to="/admin"
+                search={{}}
                 className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-brand"
               >
                 <Settings className="h-3.5 w-3.5" />

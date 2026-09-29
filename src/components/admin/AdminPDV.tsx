@@ -7,6 +7,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
   Pie,
   PieChart,
   XAxis,
@@ -307,9 +308,11 @@ export function AdminPDV({ from, to, onRangeChange }: AdminPDVProps) {
                       </defs>
                       <CartesianGrid vertical={false} />
                       <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} />
-                      <YAxis tickLine={false} axisLine={false} width={48} tickFormatter={(value) => `R$${value}`} />
+                      <YAxis yAxisId="revenue" tickLine={false} axisLine={false} width={48} tickFormatter={(value) => `R$${value}`} />
+                      <YAxis yAxisId="orders" orientation="right" allowDecimals={false} tickLine={false} axisLine={false} width={24} />
                       <ChartTooltip content={<ChartTooltipContent formatter={(value, name) => <span className="ml-auto font-medium tabular-nums">{name === "revenue" ? formatBRL(Number(value)) : `${value} pedidos`}</span>} />} />
-                      <Area dataKey="revenue" type="monotone" stroke="var(--color-revenue)" fill="url(#revenueFill)" strokeWidth={2.5} />
+                      <Area yAxisId="revenue" dataKey="revenue" type="monotone" stroke="var(--color-revenue)" fill="url(#revenueFill)" strokeWidth={2.5} />
+                      <Line yAxisId="orders" dataKey="orders" type="monotone" stroke="var(--color-orders)" strokeWidth={2} dot={{ r: 3 }} />
                     </AreaChart>
                   </ChartContainer>
                 </ReportPanel>
@@ -345,7 +348,7 @@ export function AdminPDV({ from, to, onRangeChange }: AdminPDVProps) {
                             <td className="py-3 pr-4"><div className="flex items-center gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-bold text-secondary-foreground">{index + 1}</span><span className="font-medium text-foreground">{product.name}</span></div></td>
                             <td className="py-3 text-right tabular-nums">{product.quantity}</td>
                             <td className="py-3 text-right font-medium tabular-nums">{formatBRL(product.revenue)}</td>
-                            <td className="py-3 pl-4 text-right"><div className="ml-auto flex w-24 items-center gap-2"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary" style={{ width: `${product.share}%` }} /></div><span className="w-9 text-xs tabular-nums text-muted-foreground">{product.share.toFixed(0)}%</span></div></td>
+                            <td className="py-3 pl-4 text-right"><div className="ml-auto flex w-24 items-center gap-2"><progress className="h-1.5 flex-1 accent-primary" max="100" value={product.share} aria-label={`${product.share.toFixed(0)}% do faturamento em produtos`} /><span className="w-9 text-xs tabular-nums text-muted-foreground">{product.share.toFixed(0)}%</span></div></td>
                           </tr>
                         ))}
                       </tbody>

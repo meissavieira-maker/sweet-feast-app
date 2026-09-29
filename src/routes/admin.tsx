@@ -10,6 +10,7 @@ import { AdminCategories } from "@/components/admin/AdminCategories";
 import { AdminPDV, bahiaDateString, shiftDate } from "@/components/admin/AdminPDV";
 import { OrderSoundAlert } from "@/components/admin/OrderSoundAlert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin")({
   validateSearch: (search: Record<string, unknown>) => {
