@@ -489,7 +489,7 @@ function CompactMetric({ icon: Icon, label, value }: { icon: typeof Bike; label:
 }
 
 function ReportPanel({ title, subtitle, className = "", children }: { title: string; subtitle: string; className?: string; children: React.ReactNode }) {
-  return <section className={`rounded-lg border border-border bg-card p-4 shadow-soft sm:p-5 ${className}`}><header className="mb-4"><h3 className="font-display text-xl text-card-foreground">{title}</h3><p className="text-xs text-muted-foreground">{subtitle}</p></header>{children}</section>;
+  return <section className={`min-w-0 rounded-lg border border-border bg-card p-4 shadow-soft sm:p-5 ${className}`}><header className="mb-4"><h3 className="font-display text-xl text-card-foreground">{title}</h3><p className="text-xs text-muted-foreground">{subtitle}</p></header>{children}</section>;
 }
 
 export { bahiaDateString, shiftDate };

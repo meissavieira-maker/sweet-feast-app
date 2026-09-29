@@ -5,4 +5,4 @@
 - [x] Calcular indicadores somente para pedidos em Preparando.
 - [x] Criar gráficos de vendas, horários e ranking de produtos.
 - [x] Criar detalhamento gerencial e atualização automática.
-- [ ] Validar em celular e desktop.
+- [x] Validar em celular e desktop.
