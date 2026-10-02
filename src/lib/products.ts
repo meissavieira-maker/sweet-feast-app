@@ -16,6 +16,7 @@ export type Product = {
   price: number;
   image_url: string;
   stock: number;
+  active?: boolean;
   badge?: string | null;
   featured?: boolean;
 };
