@@ -6,6 +6,7 @@ import { type Product } from "@/lib/products";
 import { useCategories } from "@/hooks/use-categories";
 import { formatBRL } from "@/lib/cart-context";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -82,7 +83,7 @@ export function AdminProducts() {
     queryFn: async (): Promise<Product[]> => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name,description,price,category,image_url,stock,badge,featured")
+        .select("id,name,description,price,category,image_url,stock,badge,featured,active")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Product[];
@@ -102,12 +103,25 @@ export function AdminProducts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const visibility = useMutation({
+    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
+      const { error } = await supabase.from("products").update({ active }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      toast.success(variables.active ? "Produto exibido na loja" : "Produto ocultado da loja");
+      void qc.invalidateQueries({ queryKey: ["admin-products"] });
+      void qc.invalidateQueries({ queryKey: ["storefront-products"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   return (
     <div>
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h2 className="font-display text-2xl text-foreground">Produtos</h2>
-          <p className="text-sm text-muted-foreground">Cadastre, edite e controle o estoque.</p>
+          <p className="text-sm text-muted-foreground">Cadastre, edite e escolha o que aparece na loja.</p>
         </div>
         <button
           onClick={() => setEditing({ category: categories[0]?.slug ?? "", stock: 10, price: 0 })}
@@ -134,6 +148,7 @@ export function AdminProducts() {
                 <th className="p-3">Categoria</th>
                 <th className="p-3">Preço</th>
                 <th className="p-3">Estoque</th>
+                <th className="p-3 text-center">Na loja</th>
                 <th className="p-3"></th>
               </tr>
             </thead>
@@ -169,6 +184,15 @@ export function AdminProducts() {
                     >
                       {p.stock} un.
                     </span>
+                  </td>
+                  <td className="p-3 text-center">
+                    <Switch
+                      checked={p.active !== false}
+                      disabled={visibility.isPending && visibility.variables?.id === p.id}
+                      onCheckedChange={(active) => visibility.mutate({ id: p.id, active })}
+                      aria-label={`${p.active !== false ? "Ocultar" : "Exibir"} ${p.name} na loja`}
+                      title={p.active !== false ? "Ocultar da loja" : "Exibir na loja"}
+                    />
                   </td>
                   <td className="p-3 text-right">
                     <button
