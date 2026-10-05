@@ -22,6 +22,13 @@
       "when": 1791211269496,
       "tag": "0002_add_purchase_item_presentation",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791211287401,
+      "tag": "0003_mark_standard_cost_items",
+      "breakpoints": true
     }
   ]
 }

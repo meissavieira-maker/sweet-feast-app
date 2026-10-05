@@ -104,6 +104,7 @@ export type Database = {
           base_unit: string
           created_at: string
           id: string
+          is_standard: boolean
           kind: string
           name: string
           updated_at: string
@@ -113,6 +114,7 @@ export type Database = {
           base_unit: string
           created_at?: string
           id?: string
+          is_standard?: boolean
           kind?: string
           name: string
           updated_at?: string
@@ -122,6 +124,7 @@ export type Database = {
           base_unit?: string
           created_at?: string
           id?: string
+          is_standard?: boolean
           kind?: string
           name?: string
           updated_at?: string
