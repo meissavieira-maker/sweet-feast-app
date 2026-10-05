@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Loader2, LogOut, Package, ShoppingBag, ArrowLeft, Settings, LayoutList, ChartNoAxesCombined } from "lucide-react";
+import { Loader2, LogOut, Package, ShoppingBag, ArrowLeft, Settings, LayoutList, ChartNoAxesCombined, CircleDollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { AdminAuth } from "@/components/admin/AdminAuth";
@@ -8,13 +8,14 @@ import { AdminOrders } from "@/components/admin/AdminOrders";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { AdminCategories } from "@/components/admin/AdminCategories";
 import { AdminPDV, bahiaDateString, shiftDate } from "@/components/admin/AdminPDV";
+import { AdminCosts } from "@/components/admin/AdminCosts";
 import { OrderSoundAlert } from "@/components/admin/OrderSoundAlert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin")({
   validateSearch: (search: Record<string, unknown>) => {
-    const allowedTabs = ["produtos", "categorias", "pedidos", "config", "pdv"] as const;
+    const allowedTabs = ["produtos", "categorias", "pedidos", "config", "pdv", "custos"] as const;
     const tab = allowedTabs.find((value) => value === search.tab) ?? "produtos";
     const datePattern = /^\d{4}-\d{2}-\d{2}$/;
     const today = bahiaDateString();
@@ -106,6 +107,9 @@ function AdminPage() {
             <TabsTrigger value="pdv" className="gap-1.5">
               <ChartNoAxesCombined className="h-4 w-4" /> PDV
             </TabsTrigger>
+            <TabsTrigger value="custos" className="gap-1.5">
+              <CircleDollarSign className="h-4 w-4" /> Custos
+            </TabsTrigger>
           </TabsList>
           </div>
           <TabsContent value="produtos" className="mt-6">
@@ -126,6 +130,9 @@ function AdminPage() {
               to={to}
               onRangeChange={(range) => void navigate({ search: (previous) => ({ ...previous, tab: "pdv", ...range }), replace: true })}
             />
+          </TabsContent>
+          <TabsContent value="custos" className="mt-6">
+            <AdminCosts />
           </TabsContent>
         </Tabs>
       </main>
