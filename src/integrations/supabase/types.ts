@@ -62,6 +62,260 @@ export type Database = {
         }
         Relationships: []
       }
+      cost_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          expense_date: string
+          id: string
+          notes: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          expense_date?: string
+          id?: string
+          notes?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          expense_date?: string
+          id?: string
+          notes?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cost_items: {
+        Row: {
+          active: boolean
+          base_unit: string
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          base_unit: string
+          created_at?: string
+          id?: string
+          kind?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          base_unit?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cost_purchase_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          purchase_id: string
+          quantity: number
+          total_cost: number
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          purchase_id: string
+          quantity: number
+          total_cost: number
+          unit: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          purchase_id?: string
+          quantity?: number
+          total_cost?: number
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_purchase_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "cost_item_prices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_purchase_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "cost_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_purchase_items_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "cost_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cost_purchases: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string
+          purchase_date: string
+          supplier: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string
+          purchase_date?: string
+          supplier?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string
+          purchase_date?: string
+          supplier?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cost_recipe_components: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          quantity: number
+          recipe_id: string
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          quantity: number
+          recipe_id: string
+          unit: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          quantity?: number
+          recipe_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_recipe_components_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "cost_item_prices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_recipe_components_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "cost_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_recipe_components_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "cost_recipe_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_recipe_components_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "cost_recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cost_recipes: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          labor_cost: number
+          name: string
+          notes: string
+          overhead_percent: number
+          product_id: string | null
+          updated_at: string
+          yield_label: string
+          yield_quantity: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          labor_cost?: number
+          name: string
+          notes?: string
+          overhead_percent?: number
+          product_id?: string | null
+          updated_at?: string
+          yield_label?: string
+          yield_quantity?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          labor_cost?: number
+          name?: string
+          notes?: string
+          overhead_percent?: number
+          product_id?: string | null
+          updated_at?: string
+          yield_label?: string
+          yield_quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_recipes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -232,7 +486,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      cost_item_prices: {
+        Row: {
+          active: boolean | null
+          base_unit: string | null
+          id: string | null
+          kind: string | null
+          name: string | null
+          purchased_total: number | null
+          unit_cost: number | null
+        }
+        Relationships: []
+      }
+      cost_recipe_summary: {
+        Row: {
+          active: boolean | null
+          component_cost: number | null
+          direct_cost: number | null
+          id: string | null
+          labor_cost: number | null
+          margin_percent: number | null
+          name: string | null
+          overhead_percent: number | null
+          product_id: string | null
+          product_name: string | null
+          sale_price: number | null
+          total_cost: number | null
+          unit_cost: number | null
+          unit_profit: number | null
+          unpriced_items: number | null
+          yield_label: string | null
+          yield_quantity: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_recipes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       claim_first_admin: { Args: never; Returns: boolean }
