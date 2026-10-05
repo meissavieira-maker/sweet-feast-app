@@ -10,4 +10,4 @@
 - [x] Adicionar cadastro mensal de compras, insumos, embalagens e despesas.
 - [x] Adicionar fichas técnicas com conversão automática e rateio opcional.
 - [x] Calcular custo total, custo unitário, preço, lucro e margem por receita.
-- [ ] Criar panorama mensal de custos e validar em celular e desktop.
+- [x] Criar panorama mensal de custos e validar em celular e desktop.
