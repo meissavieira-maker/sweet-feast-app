@@ -1,2 +1,3 @@
 - Keep new-order sound alerts in an admin-only mounted control, with a user gesture to unlock browser audio and realtime plus polling deduplication; browsers block unsolicited sound and realtime messages can be missed.
 - Treat only orders whose current status is `preparando` as sales in the PDV dashboard; this is the business accounting rule.
+- Keep cost-control records in admin-only RLS tables and derive weighted item and recipe costs in database views so every screen uses consistent calculations.
