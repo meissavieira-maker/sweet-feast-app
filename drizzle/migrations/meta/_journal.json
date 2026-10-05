@@ -15,6 +15,20 @@
       "when": 1791206122783,
       "tag": "0001_create_cost_control",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791211269496,
+      "tag": "0002_add_purchase_item_presentation",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791211287401,
+      "tag": "0003_mark_standard_cost_items",
+      "breakpoints": true
     }
   ]
 }

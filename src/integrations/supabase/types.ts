@@ -104,6 +104,7 @@ export type Database = {
           base_unit: string
           created_at: string
           id: string
+          is_standard: boolean
           kind: string
           name: string
           updated_at: string
@@ -113,6 +114,7 @@ export type Database = {
           base_unit: string
           created_at?: string
           id?: string
+          is_standard?: boolean
           kind?: string
           name: string
           updated_at?: string
@@ -122,6 +124,7 @@ export type Database = {
           base_unit?: string
           created_at?: string
           id?: string
+          is_standard?: boolean
           kind?: string
           name?: string
           updated_at?: string
@@ -133,7 +136,9 @@ export type Database = {
           created_at: string
           id: string
           item_id: string
+          presentation: string
           purchase_id: string
+          purchase_unit_price: number | null
           quantity: number
           total_cost: number
           unit: string
@@ -142,7 +147,9 @@ export type Database = {
           created_at?: string
           id?: string
           item_id: string
+          presentation?: string
           purchase_id: string
+          purchase_unit_price?: number | null
           quantity: number
           total_cost: number
           unit: string
@@ -151,7 +158,9 @@ export type Database = {
           created_at?: string
           id?: string
           item_id?: string
+          presentation?: string
           purchase_id?: string
+          purchase_unit_price?: number | null
           quantity?: number
           total_cost?: number
           unit?: string
