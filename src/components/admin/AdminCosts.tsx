@@ -3,10 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
-  Boxes,
   Calculator,
   CircleAlert,
-  ClipboardList,
   Loader2,
   Pencil,
   Plus,
