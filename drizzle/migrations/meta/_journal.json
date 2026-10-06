@@ -29,6 +29,13 @@
       "when": 1791211287401,
       "tag": "0003_mark_standard_cost_items",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791300848452,
+      "tag": "0004_admin_read_products_and_standard_items_view",
+      "breakpoints": true
     }
   ]
 }

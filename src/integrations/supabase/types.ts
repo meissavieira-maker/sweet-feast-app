@@ -500,6 +500,7 @@ export type Database = {
           active: boolean | null
           base_unit: string | null
           id: string | null
+          is_standard: boolean | null
           kind: string | null
           name: string | null
           purchased_total: number | null
