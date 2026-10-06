@@ -243,7 +243,7 @@ function PurchaseDialog({ initial, items, onClose, onSaved }: { initial: Purchas
     setBusy(true);
     try {
       const knownItems = [...items];
-      const resolvedLines: Array<{ item_id: string; quantity: number; unit: string; total_cost: number }> = [];
+      const resolvedLines: Array<{ item_id: string; quantity: number; unit: string; total_cost: number; presentation: string; purchase_unit_price: number | null }> = [];
       for (const line of lines) {
         const typedName = line.item_name?.trim() ?? "";
         let item = knownItems.find((candidate) => candidate.id === line.item_id || candidate.name.toLocaleLowerCase("pt-BR") === typedName.toLocaleLowerCase("pt-BR"));
