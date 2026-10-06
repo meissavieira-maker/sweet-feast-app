@@ -12,3 +12,4 @@
 - [x] Calcular custo total, custo unitário, preço, lucro e margem por receita.
 - [x] Criar panorama mensal de custos e validar em celular e desktop.
 - [ ] Fixar os ingredientes informados no catálogo e registrar suas apresentações originais nas compras de setembro de 2026.
+- [ ] Corrigir o erro ao desativar a chave "Na loja" de um produto.
