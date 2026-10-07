@@ -217,18 +217,14 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
               ? (success.paymentMethod === "card" ? "Pedido registrado" : "Pedido confirmado")
               : showPix
                 ? "Pague com PIX"
-                : showCard
-                  ? "Pague com Cartão"
-                  : "Seu Carrinho"}
+                 : "Seu Carrinho"}
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             {success
               ? (success.paymentMethod === "card" ? "Aguardando pagamento via cartão de crédito." : "Em instantes a doçaria começa a preparar.")
               : showPix
                 ? "Escaneie o QR Code ou copie o código abaixo no seu app do banco."
-                : showCard
-                  ? "Formulário seguro do Mercado Pago — seus dados não passam por nós."
-                  : `${count} ${count === 1 ? "item adicionado" : "itens adicionados"}`}
+                 : `${count} ${count === 1 ? "item adicionado" : "itens adicionados"}`}
           </DialogDescription>
         </div>
 
