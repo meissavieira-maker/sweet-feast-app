@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Substituir o cartão por solicitação no WhatsApp com comanda pronta e validar em computador e celular.
+- [x] Substituir o cartão por solicitação no WhatsApp com comanda pronta e validar em computador e celular.
 
 - [x] Adicionar aba PDV ao painel administrativo.
 - [x] Criar filtros de período persistidos no endereço da página.
