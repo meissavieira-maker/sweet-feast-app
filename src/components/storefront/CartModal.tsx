@@ -1,8 +1,8 @@
-import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin, Copy, QrCode, CreditCard, Lock, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Minus, Plus, Trash2, Bike, Store, ArrowRight, Loader2, CheckCircle2, MapPin, Copy, QrCode, CreditCard, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 import { formatBRL, useCart, type CartItem } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
-import { createCardPayment, getPublicConfig } from "@/lib/payments.functions";
+import { Button } from "@/components/ui/button";
 import type { Product } from "@/lib/products";
 import {
   Dialog,
@@ -23,7 +23,9 @@ const DELIVERY_CITIES = [
 ] as const;
 
 const PICKUP_ADDRESS = "Rua Rodrigo Brandão, Número 32, Cachoeira - BA";
-const WHATSAPP_PHONE = "5575991074216";
+// Destination resolved from https://wa.me/message/MU4ONOLZI5GTF1.
+const CARD_WHATSAPP_PHONE = "557591074216";
+const CARD_REQUEST_LABEL = "solicitar pagamento via cartão de crédito";
 const PIX_KEY = "meissavieira@hotmail.com";
 const PIX_BENEFICIARY = "Meissa Vieira dos Santos Mendes";
 const CLOSED_MESSAGE =
@@ -39,6 +41,7 @@ type SuccessInfo = {
   address: string;
   items: CartItem[];
   total: number;
+  paymentMethod?: PaymentMethod;
 };
 
 
@@ -48,41 +51,6 @@ type PixInfo = {
   qr_code_base64: string;
   ticket_url: string;
 };
-
-declare global {
-  interface Window {
-    MercadoPago?: new (publicKey: string, options?: { locale?: string }) => {
-      bricks: () => {
-        create: (
-          type: string,
-          containerId: string,
-          settings: Record<string, unknown>,
-        ) => Promise<{ unmount: () => void }>;
-      };
-    };
-  }
-}
-
-function loadMpSdk(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  if (window.MercadoPago) return Promise.resolve();
-  const existing = document.querySelector<HTMLScriptElement>("script[data-mp-sdk]");
-  if (existing) {
-    return new Promise((resolve, reject) => {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("Falha ao carregar SDK do Mercado Pago")));
-    });
-  }
-  return new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = "https://sdk.mercadopago.com/js/v2";
-    s.async = true;
-    s.dataset.mpSdk = "1";
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("Falha ao carregar SDK do Mercado Pago"));
-    document.head.appendChild(s);
-  });
-}
 
 export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { items, setQty, remove, add, total, count, clear } = useCart();
@@ -100,110 +68,10 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [pending, setPending] = useState<SuccessInfo | null>(null);
   const [success, setSuccess] = useState<SuccessInfo | null>(null);
   
-  const [cardStage, setCardStage] = useState<null | "loading" | "ready" | "processing">(null);
-  const [cardError, setCardError] = useState<string | null>(null);
-  const brickRef = useRef<{ unmount: () => void } | null>(null);
-
   const selectedCity = DELIVERY_CITIES.find((c) => c.id === cityId);
   const deliveryFee = mode === "entrega" ? (selectedCity?.fee ?? 0) : 0;
   const finalTotal = total + deliveryFee;
 
-  // Manual PIX flow — no automatic polling.
-
-  // Mount the Mercado Pago Card Brick when entering card stage
-  useEffect(() => {
-    if (cardStage !== "loading" || !pending) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const cfg = await getPublicConfig();
-        if (!cfg.mp_public_key) {
-          throw new Error("Chave pública do Mercado Pago não configurada nas Configurações do admin.");
-        }
-        await loadMpSdk();
-        if (cancelled || !window.MercadoPago) return;
-        const mp = new window.MercadoPago(cfg.mp_public_key, { locale: "pt-BR" });
-        const builder = mp.bricks();
-        // Reset container
-        const container = document.getElementById("cardPaymentBrick_container");
-        if (container) container.innerHTML = "";
-        brickRef.current = await builder.create("cardPayment", "cardPaymentBrick_container", {
-          initialization: { amount: Number(pending.total.toFixed(2)) },
-          customization: {
-            visual: { style: { theme: "default" } },
-            paymentMethods: { maxInstallments: 1, minInstallments: 1 },
-          },
-          callbacks: {
-            onReady: () => {
-              if (!cancelled) setCardStage("ready");
-            },
-            onError: (err: unknown) => {
-              const msg = (err as { message?: string })?.message ?? "Erro no formulário do cartão";
-              setCardError(msg);
-            },
-            onSubmit: async (cardFormData: {
-              token: string;
-              issuer_id?: string;
-              payment_method_id: string;
-              installments: number;
-              payer: { email: string; identification?: { type: string; number: string } };
-            }) => {
-              setCardStage("processing");
-              setCardError(null);
-              try {
-                const r = await createCardPayment({
-                  data: {
-                    order_id: pending.orderId,
-                    amount: pending.total,
-                    description: `Pedido #${pending.orderId.slice(0, 8).toUpperCase()} — Meissa Vieira`,
-                    token: cardFormData.token,
-                    payment_method_id: cardFormData.payment_method_id,
-                    issuer_id: cardFormData.issuer_id ?? null,
-                    installments: 1,
-                    payer: {
-                      email: cardFormData.payer.email,
-                      identification: cardFormData.payer.identification ?? null,
-                    },
-                  },
-                });
-                if (r.status === "approved") {
-                  setSuccess(pending);
-                  setCardStage(null);
-                  brickRef.current?.unmount();
-                  brickRef.current = null;
-                } else if (r.status === "in_process" || r.status === "pending") {
-                  setCardError("Pagamento em análise. Você será notificado assim que aprovado.");
-                  setCardStage("ready");
-                } else {
-                  setCardError(`Pagamento recusado (${r.status_detail || r.status}). Tente outro cartão.`);
-                  setCardStage("ready");
-                }
-              } catch (e: unknown) {
-                setCardError(e instanceof Error ? e.message : "Falha ao processar cartão");
-                setCardStage("ready");
-              }
-            },
-          },
-        });
-      } catch (e: unknown) {
-        if (!cancelled) {
-          setCardError(e instanceof Error ? e.message : "Não foi possível iniciar o pagamento por cartão");
-          setCardStage("ready");
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [cardStage, pending]);
-
-  // Unmount brick on close
-  useEffect(() => {
-    if (!open && brickRef.current) {
-      try { brickRef.current.unmount(); } catch { /* noop */ }
-      brickRef.current = null;
-    }
-  }, [open]);
   // Fetch order-bump suggestions (one Pudim + one Caseirinho) when modal opens
   useEffect(() => {
     if (!open) return;
@@ -232,7 +100,8 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   }
 
 
-  async function handleCheckout() {
+  async function handleCheckout(paymentMethod: PaymentMethod = method) {
+    if (submitting || items.length === 0) return;
     if (!storeOpen) {
       toast.error(CLOSED_MESSAGE);
       return;
@@ -252,6 +121,9 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       }
     }
 
+    // Open during the user gesture so mobile browsers do not block the new tab.
+    const whatsappWindow = paymentMethod === "card" ? window.open("about:blank", "_blank") : null;
+    if (whatsappWindow) whatsappWindow.opener = null;
     setSubmitting(true);
     const fullAddress =
       mode === "entrega" && selectedCity
@@ -266,10 +138,11 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       _address: fullAddress,
       _delivery_fee: deliveryFee,
       _items: items.map((i) => ({ product_id: i.product.id, quantity: i.qty })),
-      _notes: undefined,
+      _notes: paymentMethod === "card" ? "Solicitação de pagamento via cartão de crédito pelo WhatsApp — aguardando pagamento." : undefined,
     });
 
     if (error) {
+      whatsappWindow?.close();
       setSubmitting(false);
       toast.error(error.message || "Não foi possível concluir o pedido");
       return;
@@ -283,21 +156,22 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       address: fullAddress,
       items: snapshotItems,
       total: snapshotTotal,
+      paymentMethod,
     };
 
 
     try {
-      if (method === "pix") {
+      if (paymentMethod === "pix") {
         // Manual PIX: no Mercado Pago API call — show static recipient key.
         setPending(pendingInfo);
         setPix({ payment_id: "", qr_code: "", qr_code_base64: "", ticket_url: "" });
         clear();
       } else {
-        // Card → open brick
-        setPending(pendingInfo);
-        setCardStage("loading");
-        setCardError(null);
+        setSuccess(pendingInfo);
         clear();
+        const url = buildCardWhatsAppUrl(pendingInfo, heroSettings?.whatsapp_template ?? DEFAULT_WHATSAPP_TEMPLATE);
+        if (whatsappWindow) whatsappWindow.location.replace(url);
+        else window.location.assign(url);
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Falha ao iniciar pagamento";
@@ -319,15 +193,9 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
   function handleClose(v: boolean) {
     if (!v) {
-      if (brickRef.current) {
-        try { brickRef.current.unmount(); } catch { /* noop */ }
-        brickRef.current = null;
-      }
       setSuccess(null);
       setPix(null);
       setPending(null);
-      setCardStage(null);
-      setCardError(null);
       setName("");
       setPhone("");
       setAddress("");
@@ -337,9 +205,8 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
     onOpenChange(v);
   }
 
-  const showCard = cardStage !== null && !success;
-  const showPix = !!pix && !success && !showCard;
-  const showCart = !success && !showPix && !showCard;
+  const showPix = !!pix && !success;
+  const showCart = !success && !showPix;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -347,21 +214,17 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         <div className="shrink-0 border-b border-border px-5 py-3 sm:px-6 sm:py-4">
           <DialogTitle className="font-display text-lg sm:text-xl text-card-foreground">
             {success
-              ? "Pedido confirmado"
+              ? (success.paymentMethod === "card" ? "Pedido registrado" : "Pedido confirmado")
               : showPix
                 ? "Pague com PIX"
-                : showCard
-                  ? "Pague com Cartão"
-                  : "Seu Carrinho"}
+                 : "Seu Carrinho"}
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             {success
-              ? "Em instantes a doçaria começa a preparar."
+              ? (success.paymentMethod === "card" ? "Aguardando pagamento via cartão de crédito." : "Em instantes a doçaria começa a preparar.")
               : showPix
                 ? "Escaneie o QR Code ou copie o código abaixo no seu app do banco."
-                : showCard
-                  ? "Formulário seguro do Mercado Pago — seus dados não passam por nós."
-                  : `${count} ${count === 1 ? "item adicionado" : "itens adicionados"}`}
+                 : `${count} ${count === 1 ? "item adicionado" : "itens adicionados"}`}
           </DialogDescription>
         </div>
 
@@ -416,33 +279,6 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
         )}
 
 
-        {showCard && (
-          <div className="px-6 py-5">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                <Lock className="h-3 w-3" /> Pagamento seguro · Mercado Pago
-              </div>
-              <span className="font-display text-base text-primary">{formatBRL(pending?.total ?? 0)}</span>
-            </div>
-            {cardStage === "loading" && (
-              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregando formulário…
-              </div>
-            )}
-            <div id="cardPaymentBrick_container" className="min-h-[200px]" />
-            {cardStage === "processing" && (
-              <div className="mt-3 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Processando pagamento…
-              </div>
-            )}
-            {cardError && (
-              <p className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-                {cardError}
-              </p>
-            )}
-          </div>
-        )}
-
         {success && (
           <div className="px-6 py-8 text-center">
             <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
@@ -469,7 +305,9 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
             <button
               type="button"
-              onClick={() => openWhatsAppOrder(success, heroSettings?.whatsapp_template ?? DEFAULT_WHATSAPP_TEMPLATE)}
+              onClick={() => success.paymentMethod === "card"
+                ? window.open(buildCardWhatsAppUrl(success, heroSettings?.whatsapp_template ?? DEFAULT_WHATSAPP_TEMPLATE), "_blank", "noopener,noreferrer")
+                : openWhatsAppOrder(success, heroSettings?.whatsapp_template ?? DEFAULT_WHATSAPP_TEMPLATE)}
               className="mt-6 inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-4 text-base font-semibold text-white shadow-glow transition hover:brightness-110"
             >
               <WhatsAppIcon className="h-5 w-5" />
@@ -577,13 +415,16 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                     label="Pagar com PIX"
                     hint="Aprovação imediata"
                   />
-                  <ModeButton
-                    active={method === "card"}
-                    onClick={() => setMethod("card")}
-                    icon={<CreditCard className="h-4 w-4" />}
-                    label="Pagar com Cartão"
-                    hint="À vista"
-                  />
+                  <Button
+                    type="button"
+                    disabled={submitting || !storeOpen}
+                    onClick={() => handleCheckout("card")}
+                    className="h-auto min-h-24 min-w-0 flex-col items-start whitespace-normal rounded-xl border border-brand-deep bg-brand-deep p-3 text-left text-brand-deep-foreground shadow-soft hover:bg-brand-deep/90"
+                  >
+                    <CreditCard className="h-5 w-5" />
+                    <span className="text-sm font-semibold leading-snug">{CARD_REQUEST_LABEL}</span>
+                    {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  </Button>
                 </div>
 
                 <div className="mt-4 space-y-2">
@@ -678,7 +519,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                       {bumps.pudim && (
                         <BumpRow
                           product={bumps.pudim}
-                          checked={items.some((i) => i.product.id === bumps.pudim!.id)}
+                          checked={items.some((i) => i.product.id === bumps.pudim?.id)}
                           onToggle={() => toggleBump(bumps.pudim)}
                           label={`Aproveite para levar um ${bumps.pudim.name} por apenas ${formatBRL(bumps.pudim.price)}!`}
                         />
@@ -686,7 +527,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                       {bumps.caseirinho && (
                         <BumpRow
                           product={bumps.caseirinho}
-                          checked={items.some((i) => i.product.id === bumps.caseirinho!.id)}
+                          checked={items.some((i) => i.product.id === bumps.caseirinho?.id)}
                           onToggle={() => toggleBump(bumps.caseirinho)}
                           label={`Adicione um ${bumps.caseirinho.name} para o café da tarde por apenas ${formatBRL(bumps.caseirinho.price)}!`}
                         />
@@ -698,7 +539,7 @@ export function CartModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
                 <button
                   disabled={submitting || !storeOpen}
-                  onClick={handleCheckout}
+                  onClick={() => handleCheckout()}
                   className="mt-5 group flex w-full items-center justify-center gap-2 rounded-full bg-cherry px-6 py-4 text-base font-semibold text-cherry-foreground shadow-glow transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -806,6 +647,12 @@ function buildWhatsAppMessage(s: SuccessInfo, template: string) {
   );
 }
 
+
+function buildCardWhatsAppUrl(s: SuccessInfo, template: string) {
+  const subtotal = s.items.reduce((sum, item) => sum + item.qty * item.product.price, 0);
+  const message = `${CARD_REQUEST_LABEL}\n\n${buildWhatsAppMessage(s, template)}\n\nSubtotal: ${formatBRL(subtotal)}\nTaxa de entrega: ${formatBRL(Math.max(0, s.total - subtotal))}\nTotal: ${formatBRL(s.total)}\nPagamento: cartão de crédito — aguardando pagamento`;
+  return `https://wa.me/${CARD_WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`;
+}
 
 function openWhatsAppOrder(s: SuccessInfo, template: string) {
   const mensagem = buildWhatsAppMessage(s, template);
