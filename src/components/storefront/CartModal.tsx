@@ -655,12 +655,12 @@ function buildWhatsAppUrl(phone: string, message: string) {
   // URLSearchParams encodes the full Unicode message as UTF-8 for WhatsApp links.
   const params = new URLSearchParams();
   params.set("text", message.normalize("NFC"));
-  return \`https://wa.me/\${phone}?\${params.toString()}\`;
+  return `https://wa.me/${phone}?${params.toString()}`;
 }
 
 function buildCardWhatsAppUrl(s: SuccessInfo, template: string) {
   const subtotal = s.items.reduce((sum, item) => sum + item.qty * item.product.price, 0);
-  const message = \`\${CARD_REQUEST_LABEL}\\n\\n\${buildWhatsAppMessage(s, template)}\\n\\nSubtotal: \${formatBRL(subtotal)}\\nTaxa de entrega: \${formatBRL(Math.max(0, s.total - subtotal))}\\nTotal: \${formatBRL(s.total)}\\nPagamento: cartão de crédito — aguardando pagamento\`;
+  const message = `${CARD_REQUEST_LABEL}\n\n${buildWhatsAppMessage(s, template)}\n\nSubtotal: ${formatBRL(subtotal)}\nTaxa de entrega: ${formatBRL(Math.max(0, s.total - subtotal))}\nTotal: ${formatBRL(s.total)}\nPagamento: cartão de crédito — aguardando pagamento`;
   return buildWhatsAppUrl(CARD_WHATSAPP_PHONE, message);
 }
 
