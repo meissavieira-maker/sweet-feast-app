@@ -75,17 +75,36 @@ function Store() {
 
   const { data: categories = [] } = useCategories();
 
-  const { data: products = [], isLoading } = useQuery({
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+    error: productsError,
+    refetch: refetchProducts,
+  } = useQuery({
     queryKey: ["storefront-products"],
     queryFn: async (): Promise<Product[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id,name,description,price,category,image_url,stock,badge,featured")
-        .eq("active", true)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as Product[];
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const timeout = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error("A consulta dos produtos demorou mais de 15 segundos. Verifique a conexão com o Supabase e tente novamente.")),
+            15_000,
+          );
+        });
+        const request = supabase
+          .from("products")
+          .select("id,name,description,price,category,image_url,stock,badge,featured")
+          .eq("active", true)
+          .order("created_at", { ascending: false });
+        const { data, error } = await Promise.race([request, timeout]);
+        if (error) throw error;
+        return (data ?? []) as Product[];
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
     },
+    retry: 1,
   });
 
 
@@ -166,8 +185,25 @@ function Store() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-20 text-muted-foreground">
+        <div className="flex justify-center py-20 text-muted-foreground" role="status" aria-live="polite">
           <Loader2 className="h-6 w-6 animate-spin" />
+          <span className="sr-only">Carregando produtos…</span>
+        </div>
+      ) : isError ? (
+        <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+          <h2 className="font-display text-lg font-semibold text-foreground">Não foi possível carregar os produtos</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {productsError instanceof Error
+              ? productsError.message
+              : "Ocorreu um erro ao consultar os produtos. Verifique sua conexão e tente novamente."}
+          </p>
+          <button
+            type="button"
+            onClick={() => void refetchProducts()}
+            className="mt-4 inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:brightness-110"
+          >
+            Tentar novamente
+          </button>
         </div>
       ) : (
         <>
