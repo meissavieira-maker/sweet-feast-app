@@ -469,7 +469,7 @@ function buildReport(orders: SalesOrder[], from: string, to: string) {
 function MetricCard({ title, value, icon: Icon, comparison }: { title: string; value: string; icon: typeof TrendingUp; comparison?: number | null }) {
   const positive = comparison !== undefined && comparison !== null && comparison >= 0;
   return (
-    <article className="rounded-lg border border-border bg-card p-4 shadow-soft">
+    <article className="rounded-2xl border border-border/80 bg-card p-4 shadow-soft transition-shadow hover:shadow-card sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div><p className="text-xs font-medium uppercase text-muted-foreground">{title}</p><p className="mt-2 text-2xl font-bold tabular-nums text-card-foreground">{value}</p></div>
         <span className="flex h-9 w-9 items-center justify-center rounded-md bg-accent text-accent-foreground"><Icon className="h-4 w-4" /></span>
