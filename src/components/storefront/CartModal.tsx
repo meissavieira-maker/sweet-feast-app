@@ -651,15 +651,22 @@ function buildWhatsAppMessage(s: SuccessInfo, template: string) {
 }
 
 
+function buildWhatsAppUrl(phone: string, message: string) {
+  // URLSearchParams encodes the full Unicode message as UTF-8 for WhatsApp links.
+  const params = new URLSearchParams();
+  params.set("text", message.normalize("NFC"));
+  return \`https://wa.me/\${phone}?\${params.toString()}\`;
+}
+
 function buildCardWhatsAppUrl(s: SuccessInfo, template: string) {
   const subtotal = s.items.reduce((sum, item) => sum + item.qty * item.product.price, 0);
-  const message = `${CARD_REQUEST_LABEL}\n\n${buildWhatsAppMessage(s, template)}\n\nSubtotal: ${formatBRL(subtotal)}\nTaxa de entrega: ${formatBRL(Math.max(0, s.total - subtotal))}\nTotal: ${formatBRL(s.total)}\nPagamento: cartão de crédito — aguardando pagamento`;
-  return `https://wa.me/${CARD_WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`;
+  const message = \`\${CARD_REQUEST_LABEL}\\n\\n\${buildWhatsAppMessage(s, template)}\\n\\nSubtotal: \${formatBRL(subtotal)}\\nTaxa de entrega: \${formatBRL(Math.max(0, s.total - subtotal))}\\nTotal: \${formatBRL(s.total)}\\nPagamento: cartão de crédito — aguardando pagamento\`;
+  return buildWhatsAppUrl(CARD_WHATSAPP_PHONE, message);
 }
 
 function openWhatsAppOrder(s: SuccessInfo, template: string) {
   const mensagem = buildWhatsAppMessage(s, template);
-  window.open("https://wa.me/5575991074216?text=" + encodeURIComponent(mensagem), "_blank");
+  window.open(buildWhatsAppUrl("5575991074216", mensagem), "_blank");
 }
 
 function WhatsAppIcon({ className }: { className?: string }) {
