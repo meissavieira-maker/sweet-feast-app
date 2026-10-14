@@ -177,12 +177,18 @@ function Store() {
               ref={(el) => {
                 sectionRefs.current[FEATURED_SLUG] = el;
               }}
-              className="mx-auto max-w-3xl scroll-mt-40 px-4 pt-6"
+              className="mx-auto max-w-3xl scroll-mt-40 px-4 pt-7"
             >
-              <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
-                Mais Pedidos
-              </h2>
-              <div className="no-scrollbar -mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2">
+              <div className="mb-4 flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">Favoritos da casa</p>
+                  <h2 className="mt-1 font-display text-xl font-semibold text-foreground sm:text-2xl">
+                    Mais pedidos
+                  </h2>
+                </div>
+                <span className="mb-1 rounded-full bg-accent px-3 py-1 text-[10px] font-semibold text-accent-foreground">{highlights.length} favoritos</span>
+              </div>
+              <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-3 pt-1">
                 {highlights.map((p) => (
                   <ProductHighlightCard key={p.id} product={p} />
                 ))}
@@ -201,12 +207,13 @@ function Store() {
                   ref={(el) => {
                     sectionRefs.current[c.slug] = el;
                   }}
-                  className="scroll-mt-40 pt-6"
+                  className="scroll-mt-40 pt-8"
                 >
-                  <div className="border-b border-border pb-2">
-                    <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
+                  <div className="mb-3 flex items-end justify-between gap-3 border-b border-border/80 pb-3">
+                    <h2 className="font-display text-xl font-semibold text-foreground sm:text-2xl">
                       {c.label}
                     </h2>
+                    <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{items.length} {items.length === 1 ? "item" : "itens"}</span>
                   </div>
 
                   {items.length === 0 ? (
@@ -227,7 +234,7 @@ function Store() {
                       </p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-border">
+                    <div className="space-y-3">
                       {items.map((p) => (
                         <ProductRow key={p.id} product={p} />
                       ))}
