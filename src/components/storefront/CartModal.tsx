@@ -645,7 +645,7 @@ function buildWhatsAppMessage(s: SuccessInfo, template: string) {
   // If a saved template contains the Unicode replacement character, its emojis
   // were likely corrupted before URL encoding. Use the clean built-in template.
   const safeTemplate = template.includes("\uFFFD") ? DEFAULT_WHATSAPP_TEMPLATE : template;
-  return safeTemplate.replace(/\{(\w+)\\}/g, (_m, k: string) =>
+  return safeTemplate.replace(/\{(\w+)\}/g, (_m, k: string) =>
     Object.prototype.hasOwnProperty.call(vars, k) ? vars[k] : `{${k}}`,
   );
 }
