@@ -88,10 +88,20 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-background">
       <TopBar email={session.user.email} onLogout={async () => { await supabase.auth.signOut(); }} soundAlert />
-      <main className="mx-auto max-w-6xl px-5 py-8">
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-6 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-brand via-brand to-brand-deep p-5 text-brand-foreground shadow-card sm:p-7">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold">Painel de gestão</p>
+              <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">Sua confeitaria, em um só lugar</h1>
+              <p className="mt-2 max-w-xl text-sm text-brand-foreground/75">Gerencie a loja, acompanhe pedidos e cuide dos números do negócio.</p>
+            </div>
+            <span className="w-fit rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium">Meissa Vieira Confeitaria</span>
+          </div>
+        </div>
         <Tabs value={tab} onValueChange={(value) => void navigate({ search: (previous) => ({ ...previous, tab: value as typeof tab }), replace: true })}>
-          <div className="no-scrollbar overflow-x-auto">
-          <TabsList className="w-max bg-secondary">
+          <div className="no-scrollbar overflow-x-auto rounded-2xl border border-border bg-card p-1.5 shadow-soft">
+          <TabsList className="w-max bg-transparent p-0">
             <TabsTrigger value="produtos" className="gap-1.5">
               <Package className="h-4 w-4" /> Produtos
             </TabsTrigger>
@@ -142,17 +152,17 @@ function AdminPage() {
 
 function TopBar({ email, onLogout, soundAlert = false }: { email?: string | null; onLogout?: () => void; soundAlert?: boolean }) {
   return (
-    <header className="border-b border-border bg-card/60 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-3">
+    <header className="sticky top-0 z-30 border-b border-border/80 bg-card/90 shadow-soft backdrop-blur-xl">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Loja
           </Link>
           <div className="h-4 w-px bg-border" />
-          <span className="font-display text-lg text-foreground">Painel · Meissa Vieira</span>
+          <span className="font-display text-base font-semibold text-foreground sm:text-lg">Painel · Meissa Vieira</span>
         </div>
         {email && (
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
