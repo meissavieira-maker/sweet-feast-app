@@ -75,17 +75,36 @@ function Store() {
 
   const { data: categories = [] } = useCategories();
 
-  const { data: products = [], isLoading } = useQuery({
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+    error: productsError,
+    refetch: refetchProducts,
+  } = useQuery({
     queryKey: ["storefront-products"],
     queryFn: async (): Promise<Product[]> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id,name,description,price,category,image_url,stock,badge,featured")
-        .eq("active", true)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as Product[];
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const timeout = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error("A consulta dos produtos demorou mais de 15 segundos. Verifique a conexão com o Supabase e tente novamente.")),
+            15_000,
+          );
+        });
+        const request = supabase
+          .from("products")
+          .select("id,name,description,price,category,image_url,stock,badge,featured")
+          .eq("active", true)
+          .order("created_at", { ascending: false });
+        const { data, error } = await Promise.race([request, timeout]);
+        if (error) throw error;
+        return (data ?? []) as Product[];
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
     },
+    retry: 1,
   });
 
 
@@ -166,8 +185,25 @@ function Store() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-20 text-muted-foreground">
+        <div className="flex justify-center py-20 text-muted-foreground" role="status" aria-live="polite">
           <Loader2 className="h-6 w-6 animate-spin" />
+          <span className="sr-only">Carregando produtos…</span>
+        </div>
+      ) : isError ? (
+        <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+          <h2 className="font-display text-lg font-semibold text-foreground">Não foi possível carregar os produtos</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {productsError instanceof Error
+              ? productsError.message
+              : "Ocorreu um erro ao consultar os produtos. Verifique sua conexão e tente novamente."}
+          </p>
+          <button
+            type="button"
+            onClick={() => void refetchProducts()}
+            className="mt-4 inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground transition hover:brightness-110"
+          >
+            Tentar novamente
+          </button>
         </div>
       ) : (
         <>
@@ -177,12 +213,18 @@ function Store() {
               ref={(el) => {
                 sectionRefs.current[FEATURED_SLUG] = el;
               }}
-              className="mx-auto max-w-3xl scroll-mt-40 px-4 pt-6"
+              className="mx-auto max-w-3xl scroll-mt-40 px-4 pt-7"
             >
-              <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
-                Mais Pedidos
-              </h2>
-              <div className="no-scrollbar -mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2">
+              <div className="mb-4 flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">Favoritos da casa</p>
+                  <h2 className="mt-1 font-display text-xl font-semibold text-foreground sm:text-2xl">
+                    Mais pedidos
+                  </h2>
+                </div>
+                <span className="mb-1 rounded-full bg-accent px-3 py-1 text-[10px] font-semibold text-accent-foreground">{highlights.length} favoritos</span>
+              </div>
+              <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-3 pt-1">
                 {highlights.map((p) => (
                   <ProductHighlightCard key={p.id} product={p} />
                 ))}
@@ -201,12 +243,13 @@ function Store() {
                   ref={(el) => {
                     sectionRefs.current[c.slug] = el;
                   }}
-                  className="scroll-mt-40 pt-6"
+                  className="scroll-mt-40 pt-8"
                 >
-                  <div className="border-b border-border pb-2">
-                    <h2 className="font-sans text-sm font-bold uppercase tracking-wide text-foreground sm:text-base">
+                  <div className="mb-3 flex items-end justify-between gap-3 border-b border-border/80 pb-3">
+                    <h2 className="font-display text-xl font-semibold text-foreground sm:text-2xl">
                       {c.label}
                     </h2>
+                    <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{items.length} {items.length === 1 ? "item" : "itens"}</span>
                   </div>
 
                   {items.length === 0 ? (
@@ -227,7 +270,7 @@ function Store() {
                       </p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-border">
+                    <div className="space-y-3">
                       {items.map((p) => (
                         <ProductRow key={p.id} product={p} />
                       ))}

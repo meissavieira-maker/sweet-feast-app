@@ -10,20 +10,25 @@ export type HeroSettings = {
   whatsapp_template: string;
 };
 
-export const DEFAULT_WHATSAPP_TEMPLATE = `🍰 *1º Festival de Fatias — Meissa Vieira* 🍰
------------------------------------------
-🆔 *Pedido:* #{id}
-👤 *Cliente:* {cliente}
-📞 *WhatsApp:* {telefone}
-🛵 *Forma de Envio:* {modo}
-📍 *Endereço:* {endereco}
+export const DEFAULT_WHATSAPP_TEMPLATE = `\u{1F370} *MEISSA VIEIRA • CONFEITARIA DELIVERY* \u{1F370}
+━━━━━━━━━━━━━━━━━━━━
+\u{1F9FE} *Pedido:* #{id}
+\u{1F464} *Cliente:* {cliente}
+\u{1F4F1} *WhatsApp:* {telefone}
+\u{1F69A} *Forma de recebimento:* {modo}
+\u{1F4CD} *Endereço:* {endereco}
 
-🛒 *Fatias Reservadas:*
+━━━━━━━━━━━━━━━━━━━━
+\u{1F6CD}\u{FE0F} *ITENS DO PEDIDO*
 {itens}
 
-💰 *Total Geral:* {total}
------------------------------------------
-👉 *Lembrete:* Seus produtos estão reservados! Os envios e retiradas começam neste Domingo a partir das 14h.`;
+\u{1F4B0} *TOTAL DO PEDIDO: {total}*
+━━━━━━━━━━━━━━━━━━━━
+\u{1F4CC} *Importante:* Seus produtos estão reservados. Aguarde a confirmação do pedido.
+
+\u{1F552} *Horário de funcionamento:* Consulte os horários atualizados da loja.
+
+\u{1F49B} Obrigada pela preferência! Qualquer dúvida, é só chamar por aqui.`;
 
 export const HERO_DEFAULTS: HeroSettings = {
   hero_image_url: heroAsset.url,

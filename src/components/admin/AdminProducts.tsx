@@ -118,14 +118,14 @@ export function AdminProducts() {
 
   return (
     <div>
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-display text-2xl text-foreground">Produtos</h2>
           <p className="text-sm text-muted-foreground">Cadastre, edite e escolha o que aparece na loja.</p>
         </div>
         <button
           onClick={() => setEditing({ category: categories[0]?.slug ?? "", stock: 10, price: 0 })}
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110 sm:w-auto"
         >
           <Plus className="h-4 w-4" /> Novo produto
         </button>
@@ -136,56 +136,49 @@ export function AdminProducts() {
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       ) : products.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+        <div className="rounded-3xl border border-dashed border-border bg-card/70 p-10 text-center text-sm text-muted-foreground sm:p-12">
           Nenhum produto ainda. Clique em "Novo produto" para começar.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/50 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="p-3">Produto</th>
-                <th className="p-3">Categoria</th>
-                <th className="p-3">Preço</th>
-                <th className="p-3">Estoque</th>
-                <th className="p-3 text-center">Na loja</th>
-                <th className="p-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => (
-                <tr key={p.id} className="border-t border-border">
-                  <td className="p-3">
-                    <div className="flex items-center gap-3">
-                      {p.image_url ? (
-                        <img src={p.image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-lg bg-muted" />
-                      )}
-                      <div>
-                        <div className="font-medium text-card-foreground">{p.name}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-1">{p.description}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-3 capitalize text-muted-foreground">
-                    {categories.find((c) => c.slug === p.category)?.label ?? p.category}
-                  </td>
-                  <td className="p-3">{formatBRL(p.price)}</td>
-                  <td className="p-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        p.stock <= 0
-                          ? "bg-destructive/10 text-destructive"
-                          : p.stock < 5
-                            ? "bg-cherry/15 text-cherry"
-                            : "bg-primary/10 text-primary"
-                      }`}
-                    >
+        <>
+          {/* Mobile layout: cards prevent the product columns and actions from being clipped. */}
+          <div className="grid gap-3 md:hidden">
+            {products.map((p) => (
+              <article key={p.id} className="min-w-0 rounded-2xl border border-border bg-card p-3 shadow-sm">
+                <div className="flex min-w-0 items-start gap-3">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                  ) : (
+                    <div className="h-14 w-14 shrink-0 rounded-xl bg-muted" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="break-words font-semibold leading-snug text-card-foreground">{p.name}</h3>
+                    {p.description && <p className="mt-1 line-clamp-2 break-words text-xs text-muted-foreground">{p.description}</p>}
+                    <p className="mt-1 text-xs capitalize text-muted-foreground">
+                      {categories.find((c) => c.slug === p.category)?.label ?? p.category}
+                    </p>
+                    <p className="mt-2 font-semibold text-foreground">{formatBRL(p.price)}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3 border-t border-border pt-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Estoque</p>
+                    <span className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                      p.stock <= 0
+                        ? "bg-destructive/10 text-destructive"
+                        : p.stock < 5
+                          ? "bg-cherry/15 text-cherry"
+                          : "bg-primary/10 text-primary"
+                    }`}>
                       {p.stock} un.
                     </span>
-                  </td>
-                  <td className="p-3 text-center">
+                  </div>
+                  <div className="flex min-w-0 items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Na loja</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{p.active !== false ? "Visível" : "Oculto"}</p>
+                    </div>
                     <Switch
                       checked={p.active !== false}
                       disabled={visibility.isPending && visibility.variables?.id === p.id}
@@ -193,28 +186,114 @@ export function AdminProducts() {
                       aria-label={`${p.active !== false ? "Ocultar" : "Exibir"} ${p.name} na loja`}
                       title={p.active !== false ? "Ocultar da loja" : "Exibir na loja"}
                     />
-                  </td>
-                  <td className="p-3 text-right">
-                    <button
-                      onClick={() => setEditing(p)}
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-muted-foreground hover:text-primary"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Apagar "${p.name}"?`)) del.mutate(p.id);
-                      }}
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex gap-2 border-t border-border pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(p)}
+                    className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                    aria-label={`Editar ${p.name}`}
+                  >
+                    <Pencil className="h-4 w-4" /> Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`Apagar "${p.name}"?`)) del.mutate(p.id);
+                    }}
+                    className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-full border border-destructive/30 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10"
+                    aria-label={`Excluir ${p.name}`}
+                  >
+                    <Trash2 className="h-4 w-4" /> Excluir
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* Desktop/tablet layout keeps the existing table. */}
+          <div className="hidden overflow-x-auto rounded-2xl border border-border bg-card md:block">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead className="bg-secondary/50 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="p-3">Produto</th>
+                  <th className="p-3">Categoria</th>
+                  <th className="p-3">Preço</th>
+                  <th className="p-3">Estoque</th>
+                  <th className="p-3 text-center">Na loja</th>
+                  <th className="p-3"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {products.map((p) => (
+                  <tr key={p.id} className="border-t border-border">
+                    <td className="p-3">
+                      <div className="flex items-center gap-3">
+                        {p.image_url ? (
+                          <img src={p.image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                        ) : (
+                          <div className="h-10 w-10 rounded-lg bg-muted" />
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-medium text-card-foreground">{p.name}</div>
+                          <div className="line-clamp-1 text-xs text-muted-foreground">{p.description}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-3 capitalize text-muted-foreground">
+                      {categories.find((c) => c.slug === p.category)?.label ?? p.category}
+                    </td>
+                    <td className="p-3 whitespace-nowrap">{formatBRL(p.price)}</td>
+                    <td className="p-3">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          p.stock <= 0
+                            ? "bg-destructive/10 text-destructive"
+                            : p.stock < 5
+                              ? "bg-cherry/15 text-cherry"
+                              : "bg-primary/10 text-primary"
+                        }`}
+                      >
+                        {p.stock} un.
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <Switch
+                        checked={p.active !== false}
+                        disabled={visibility.isPending && visibility.variables?.id === p.id}
+                        onCheckedChange={(active) => visibility.mutate({ id: p.id, active })}
+                        aria-label={`${p.active !== false ? "Ocultar" : "Exibir"} ${p.name} na loja`}
+                        title={p.active !== false ? "Ocultar da loja" : "Exibir na loja"}
+                      />
+                    </td>
+                    <td className="p-3 text-right whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(p)}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-muted-foreground hover:text-primary"
+                        aria-label={`Editar ${p.name}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Apagar "${p.name}"?`)) del.mutate(p.id);
+                        }}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-muted-foreground hover:text-destructive"
+                        aria-label={`Excluir ${p.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {editing && (
