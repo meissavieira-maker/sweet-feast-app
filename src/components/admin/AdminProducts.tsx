@@ -136,7 +136,7 @@ export function AdminProducts() {
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       ) : products.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+        <div className="rounded-3xl border border-dashed border-border bg-card/70 p-10 text-center text-sm text-muted-foreground sm:p-12">
           Nenhum produto ainda. Clique em "Novo produto" para começar.
         </div>
       ) : (
