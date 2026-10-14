@@ -631,7 +631,7 @@ function buildWhatsAppMessage(s: SuccessInfo, template: string) {
   const modoLabel = s.mode === "entrega" ? "Entrega (Motoboy)" : "Retirada no Local";
   const endereco = s.mode === "entrega" ? s.address : PICKUP_ADDRESS;
   const itensTxt = s.items
-    .map((i) => `🍰 ${i.qty}x ${i.product.name} — ${formatBRL(i.product.price * i.qty)}`)
+    .map((i) => `\\u{1F370} ${i.qty}x ${i.product.name} — ${formatBRL(i.product.price * i.qty)}`)
     .join("\n");
   const vars: Record<string, string> = {
     id: shortId,
@@ -642,7 +642,10 @@ function buildWhatsAppMessage(s: SuccessInfo, template: string) {
     itens: itensTxt,
     total: formatBRL(s.total),
   };
-  return template.replace(/\{(\w+)\}/g, (_m, k: string) =>
+  // If a saved template contains the Unicode replacement character, its emojis
+  // were likely corrupted before URL encoding. Use the clean built-in template.
+  const safeTemplate = template.includes("\\uFFFD") ? DEFAULT_WHATSAPP_TEMPLATE : template;
+  return safeTemplate.replace(/\\{(\\w+)\\}/g, (_m, k: string) =>
     Object.prototype.hasOwnProperty.call(vars, k) ? vars[k] : `{${k}}`,
   );
 }
