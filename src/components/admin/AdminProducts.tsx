@@ -95,7 +95,6 @@ async function prepareProductImage(file: File): Promise<File> {
     return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
   } finally {
     if (typeof ImageBitmap !== "undefined" && source instanceof ImageBitmap) source.close();
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
   }
 }
 
