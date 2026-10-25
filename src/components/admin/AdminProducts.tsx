@@ -17,35 +17,61 @@ import {
 type Editing = Partial<Product> & { id?: string };
 
 const SIGNED_TTL = 60 * 60 * 24 * 365 * 5; // 5 anos
-const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+// Limite alto apenas para proteger a memória do aparelho: a foto é sempre
+// reduzida antes do envio, então fotos grandes de celular são aceitas.
+const MAX_IMAGE_BYTES = 60 * 1024 * 1024;
 const MAX_IMAGE_DIMENSION = 1600;
 
+function isHeicFile(file: File): boolean {
+  return (
+    /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name)
+  );
+}
+
+async function decodeImageFile(file: File): Promise<ImageBitmap | HTMLImageElement> {
+  // createImageBitmap is not available for every image format or browser (notably iOS).
+  // The image element can decode formats the device supports, including HEIC on Safari.
+  try {
+    if (typeof createImageBitmap !== "function") throw new Error("Use o leitor de imagens do aparelho");
+    return await createImageBitmap(file);
+  } catch (firstError) {
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      img.src = objectUrl;
+      await img.decode();
+      return img;
+    } catch {
+      // HEIC/HEIF (fotos de iPhone) não abrem em alguns navegadores: converte para JPEG.
+      if (isHeicFile(file)) {
+        try {
+          const { default: heic2any } = await import("heic2any");
+          const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+          const blob = Array.isArray(converted) ? converted[0] : converted;
+          return await decodeImageFile(new File([blob], "foto.jpg", { type: "image/jpeg" }));
+        } catch {
+          throw new Error("Não foi possível abrir essa foto do iPhone. Tente novamente ou use uma imagem JPG ou PNG.");
+        }
+      }
+      throw new Error("Não foi possível abrir essa foto. Tente uma imagem JPG, PNG ou WebP.");
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+}
+
 async function prepareProductImage(file: File): Promise<File> {
-  if (!file.type.startsWith("image/")) {
+  const looksLikeImage = file.type.startsWith("image/") || isHeicFile(file);
+  if (!looksLikeImage) {
     throw new Error("Selecione uma foto do seu aparelho.");
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error("A imagem deve ter no máximo 20 MB.");
+    throw new Error("A imagem é grande demais. Tente uma foto de até 60 MB.");
   }
 
-  // createImageBitmap is not available for every image format or browser (notably iOS).
-  // The image element can decode formats the device supports, including HEIC on Safari.
   let source: ImageBitmap | HTMLImageElement | undefined;
-  let objectUrl: string | undefined;
   try {
-    try {
-      if (typeof createImageBitmap !== "function") throw new Error("Use o leitor de imagens do aparelho");
-      source = await createImageBitmap(file);
-    } catch {
-      objectUrl = URL.createObjectURL(file);
-      source = new Image();
-      source.src = objectUrl;
-      try {
-        await source.decode();
-      } catch {
-        throw new Error("Não foi possível abrir essa foto. Tente uma imagem JPG, PNG ou WebP.");
-      }
-    }
+    source = await decodeImageFile(file);
     if (!source) throw new Error("Não foi possível abrir essa foto.");
     const isBitmap = typeof ImageBitmap !== "undefined" && source instanceof ImageBitmap;
     const sourceWidth = isBitmap ? source.width : (source as HTMLImageElement).naturalWidth;
@@ -69,7 +95,6 @@ async function prepareProductImage(file: File): Promise<File> {
     return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
   } finally {
     if (typeof ImageBitmap !== "undefined" && source instanceof ImageBitmap) source.close();
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
   }
 }
 
