@@ -212,13 +212,13 @@ export function AdminOrders() {
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+        <div className="rounded-3xl border border-dashed border-border bg-card/70 p-10 text-center text-sm text-muted-foreground sm:p-12">
           Nenhum pedido recebido ainda.
         </div>
       ) : (
         <div className="space-y-3">
           {orders.map((o) => (
-            <article key={o.id} className="rounded-2xl border border-border bg-card p-5 shadow-card">
+            <article key={o.id} className="rounded-2xl border border-border/80 bg-card p-4 shadow-soft transition-shadow hover:shadow-card sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">

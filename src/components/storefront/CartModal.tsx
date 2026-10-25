@@ -631,7 +631,7 @@ function buildWhatsAppMessage(s: SuccessInfo, template: string) {
   const modoLabel = s.mode === "entrega" ? "Entrega (Motoboy)" : "Retirada no Local";
   const endereco = s.mode === "entrega" ? s.address : PICKUP_ADDRESS;
   const itensTxt = s.items
-    .map((i) => `🍰 ${i.qty}x ${i.product.name} — ${formatBRL(i.product.price * i.qty)}`)
+    .map((i) => `\u{1F370} ${i.qty}x ${i.product.name} — ${formatBRL(i.product.price * i.qty)}`)
     .join("\n");
   const vars: Record<string, string> = {
     id: shortId,
@@ -642,21 +642,31 @@ function buildWhatsAppMessage(s: SuccessInfo, template: string) {
     itens: itensTxt,
     total: formatBRL(s.total),
   };
-  return template.replace(/\{(\w+)\}/g, (_m, k: string) =>
+  // If a saved template contains the Unicode replacement character, its emojis
+  // were likely corrupted before URL encoding. Use the clean built-in template.
+  const safeTemplate = template.includes("\uFFFD") ? DEFAULT_WHATSAPP_TEMPLATE : template;
+  return safeTemplate.replace(/\{(\w+)\}/g, (_m, k: string) =>
     Object.prototype.hasOwnProperty.call(vars, k) ? vars[k] : `{${k}}`,
   );
 }
 
 
+function buildWhatsAppUrl(phone: string, message: string) {
+  // URLSearchParams encodes the full Unicode message as UTF-8 for WhatsApp links.
+  const params = new URLSearchParams();
+  params.set("text", message.normalize("NFC"));
+  return `https://wa.me/${phone}?${params.toString()}`;
+}
+
 function buildCardWhatsAppUrl(s: SuccessInfo, template: string) {
   const subtotal = s.items.reduce((sum, item) => sum + item.qty * item.product.price, 0);
   const message = `${CARD_REQUEST_LABEL}\n\n${buildWhatsAppMessage(s, template)}\n\nSubtotal: ${formatBRL(subtotal)}\nTaxa de entrega: ${formatBRL(Math.max(0, s.total - subtotal))}\nTotal: ${formatBRL(s.total)}\nPagamento: cartão de crédito — aguardando pagamento`;
-  return `https://wa.me/${CARD_WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`;
+  return buildWhatsAppUrl(CARD_WHATSAPP_PHONE, message);
 }
 
 function openWhatsAppOrder(s: SuccessInfo, template: string) {
   const mensagem = buildWhatsAppMessage(s, template);
-  window.open("https://wa.me/5575991074216?text=" + encodeURIComponent(mensagem), "_blank");
+  window.open(buildWhatsAppUrl("5575991074216", mensagem), "_blank");
 }
 
 function WhatsAppIcon({ className }: { className?: string }) {
