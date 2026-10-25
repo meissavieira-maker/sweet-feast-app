@@ -53,9 +53,7 @@ async function decodeImageFile(file: File): Promise<ImageBitmap | HTMLImageEleme
           throw new Error("Não foi possível abrir essa foto do iPhone. Tente novamente ou use uma imagem JPG ou PNG.");
         }
       }
-      throw firstError instanceof Error && firstError.message === "Use o leitor de imagens do aparelho"
-        ? new Error("Não foi possível abrir essa foto. Tente uma imagem JPG, PNG ou WebP.")
-        : new Error("Não foi possível abrir essa foto. Tente uma imagem JPG, PNG ou WebP.");
+      throw new Error("Não foi possível abrir essa foto. Tente uma imagem JPG, PNG ou WebP.");
     } finally {
       URL.revokeObjectURL(objectUrl);
     }
@@ -72,7 +70,6 @@ async function prepareProductImage(file: File): Promise<File> {
   }
 
   let source: ImageBitmap | HTMLImageElement | undefined;
-  let objectUrl: string | undefined;
   try {
     source = await decodeImageFile(file);
     if (!source) throw new Error("Não foi possível abrir essa foto.");
